@@ -1,0 +1,12 @@
+name: Block Party
+id: block_party
+version: 1.0.0
+type: MINIGAME
+api-version: 1.0
+main: net.blueva.arcade.modules.blockparty.BlockPartyModule
+
+authors:
+  - Blueva
+  - Whiron
+
+description: "Block Party minigame - match the color before the floor disappears."
