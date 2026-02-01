@@ -54,6 +54,9 @@ Finish the setup with the commands below:
 - **Minigame ID:** `block_party`
 - **Module Type:** `MINIGAME`
 
+## Hytale edition notes
+- The Hytale edition requires downloading HytaleServer from https://support.hytale.com/hc/en-us/articles/45326769420827-Hytale-Server-Manual. It is not included because it requires authentication.
+
 ## Building individual editions
 If you only need one edition, you can build it on its own:
 - `mvn clean package -pl blockparty-minecraft -am`
