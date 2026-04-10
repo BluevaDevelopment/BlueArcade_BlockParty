@@ -15,7 +15,7 @@ import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
+import com.hypixel.hytale.component.Holder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class PowerupService {
         this.game = game;
     }
 
-    public void startPowerupSpawns(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    public void startPowerupSpawns(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         if (!module.getSettings().isPowerupsEnabled()) {
             return;
         }
@@ -56,7 +56,7 @@ public class PowerupService {
         }, module.getSettings().getPowerupInterval(), module.getSettings().getPowerupInterval());
     }
 
-    public void clearArenaPowerups(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    public void clearArenaPowerups(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         Map<Location, PowerupInstance> arenaPowerups = activePowerups.get(arenaId);
         if (arenaPowerups == null || arenaPowerups.isEmpty()) {
@@ -67,7 +67,7 @@ public class PowerupService {
         }
     }
 
-    private void spawnPowerup(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void spawnPowerup(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         BlockPartyState state = game.getArenaState(arenaId);
         if (state == null || state.getCurrentBlocks() == null || state.getCurrentBlocks().isEmpty()) {
@@ -104,7 +104,7 @@ public class PowerupService {
             return;
         }
 
-        GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context = game.getGameContext(player);
+        GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context = game.getGameContext(player);
         if (context == null || !context.isPlayerPlaying(player)) {
             return;
         }
@@ -128,7 +128,7 @@ public class PowerupService {
         }
     }
 
-    private void applyPowerupEffect(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void applyPowerupEffect(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                     Player player,
                                     PowerupType type) {
         int arenaId = context.getArenaId();
@@ -158,7 +158,7 @@ public class PowerupService {
     }
 
     public PowerupInstance removePowerupWithSupport(
-            GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
             int arenaId,
             Location supportLocation,
             boolean restoreBlock
@@ -176,7 +176,7 @@ public class PowerupService {
         return null;
     }
 
-    public PowerupInstance removePowerupAt(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    public PowerupInstance removePowerupAt(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                            int arenaId,
                                            Location location,
                                            boolean restoreBlock) {
@@ -208,7 +208,7 @@ public class PowerupService {
     }
 
     private Hologram<Location> spawnPowerupHologram(
-            GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
             Location location,
             PowerupType type
     ) {
@@ -221,7 +221,7 @@ public class PowerupService {
     }
 
     private String schedulePowerupParticles(
-            GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
             int arenaId,
             Location location
     ) {
@@ -230,7 +230,7 @@ public class PowerupService {
     }
 
     private Location findSafeTarget(BlockPartyState state,
-                                    GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+                                    GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         List<Location> targets = new ArrayList<>();
         for (Map.Entry<Location, String> entry : state.getCurrentBlocks().entrySet()) {
             if (BlockPartyUtils.isSameMaterial(entry.getValue(), state.getTargetMaterial())) {
@@ -244,7 +244,7 @@ public class PowerupService {
     }
 
     private void applyColorPatch(BlockPartyState state,
-                                 GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+                                 GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         if (state.getFloor() == null) {
             return;
         }
@@ -254,23 +254,25 @@ public class PowerupService {
             return;
         }
         Player player = alive.get(ThreadLocalRandom.current().nextInt(alive.size()));
-        Location center = resolvePlayerLocation(player);
-        if (center == null) {
-            center = context.getArenaAPI().getRandomSpawn();
-        }
-        if (center == null) {
-            return;
-        }
-        Location base = BlockPartyUtils.toBlockLocation(center);
-        for (int x = -module.getSettings().getPatchRadius(); x <= module.getSettings().getPatchRadius(); x++) {
-            for (int z = -module.getSettings().getPatchRadius(); z <= module.getSettings().getPatchRadius(); z++) {
-                Location loc = new Location(base.getWorld(), base.getPosition().x + x, minY, base.getPosition().z + z);
-                if (state.getFloor().contains(loc)) {
-                    context.getBlocksAPI().setBlock(loc, state.getTargetMaterial());
-                    state.getCurrentBlocks().put(BlockPartyUtils.toBlockLocation(loc), state.getTargetMaterial());
+        context.getSchedulerAPI().runAtEntity(player, () -> {
+            Location center = resolvePlayerLocation(player);
+            if (center == null) {
+                center = context.getArenaAPI().getRandomSpawn();
+            }
+            if (center == null) {
+                return;
+            }
+            Location base = BlockPartyUtils.toBlockLocation(center);
+            for (int x = -module.getSettings().getPatchRadius(); x <= module.getSettings().getPatchRadius(); x++) {
+                for (int z = -module.getSettings().getPatchRadius(); z <= module.getSettings().getPatchRadius(); z++) {
+                    Location loc = new Location(base.getWorld(), base.getPosition().x + x, minY, base.getPosition().z + z);
+                    if (state.getFloor().contains(loc)) {
+                        context.getBlocksAPI().setBlock(loc, state.getTargetMaterial());
+                        state.getCurrentBlocks().put(BlockPartyUtils.toBlockLocation(loc), state.getTargetMaterial());
+                    }
                 }
             }
-        }
+        });
     }
 
     private Location resolvePlayerLocation(Player player) {
@@ -282,7 +284,7 @@ public class PowerupService {
         return new Location(player.getWorld().getName(), position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
     }
 
-    private void teleportPlayer(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void teleportPlayer(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                 Player player,
                                 Location location) {
         if (player == null || location == null) {
@@ -303,7 +305,7 @@ public class PowerupService {
         if (arenaMap == null) {
             return;
         }
-        GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context =
+        GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context =
                 game.getGameContextFromArena(arenaId);
         for (Location location : new ArrayList<>(arenaMap.keySet())) {
             PowerupInstance instance = arenaMap.get(location);

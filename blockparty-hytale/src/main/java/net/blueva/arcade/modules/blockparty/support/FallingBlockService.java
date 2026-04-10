@@ -7,7 +7,7 @@ import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
+import com.hypixel.hytale.component.Holder;
 
 public class FallingBlockService {
 
@@ -15,7 +15,7 @@ public class FallingBlockService {
         // Falling blocks are not supported in the Hytale runtime yet.
     }
 
-    public void spawnFallingShard(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    public void spawnFallingShard(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                   Location origin,
                                   String material) {
         // Falling blocks are not supported in the Hytale runtime yet.

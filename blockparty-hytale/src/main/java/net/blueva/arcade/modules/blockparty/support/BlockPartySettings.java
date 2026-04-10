@@ -289,28 +289,23 @@ public class BlockPartySettings {
             return;
         }
 
-        File pluginDataFolder = resolvePluginDataFolder(moduleFolder);
-        if (pluginDataFolder == null) {
-            return;
-        }
-        Path pluginDataPath = pluginDataFolder.toPath();
         try (Stream<Path> paths = Files.walk(musicFolder.toPath())) {
             paths.filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".nbs"))
+                    .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".midi"))
                     .forEach(path -> {
-                        String relative = pluginDataPath.relativize(path).toString().replace(File.separatorChar, '/');
-                        musicPlaylist.add("[NBS] " + relative);
+                        // Store the absolute path without the .midi extension.
+                        // MidiLibrary resolves melody IDs against the sounds directory using
+                        // Path.resolve(), which returns an absolute path unchanged, so passing
+                        // the absolute path here lets MidiLibrary load files from the module's
+                        // own music folder without requiring them to live inside sounds/.
+                        String absPath = path.toAbsolutePath().toString();
+                        if (absPath.endsWith(".midi")) {
+                            absPath = absPath.substring(0, absPath.length() - ".midi".length());
+                        }
+                        musicPlaylist.add(absPath);
                     });
         } catch (IOException ignored) {
             // Ignore read errors and keep playlist empty.
         }
-    }
-
-    private File resolvePluginDataFolder(File moduleFolder) {
-        File modulesFolder = moduleFolder.getParentFile();
-        if (modulesFolder == null) {
-            return null;
-        }
-        return modulesFolder.getParentFile();
     }
 }

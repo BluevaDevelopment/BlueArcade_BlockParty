@@ -45,10 +45,10 @@ Finish the setup with the commands below:
 - `/baa game [arena_id] block_party pattern remove <name>` — Remove a pattern.
 - `/baa game [arena_id] block_party pattern list` — List existing patterns.
 - `/baa game [arena_id] block_party pattern initial <name>` — Set the initial pattern.
-- `/baa game [arena_id] block_party musictime <seconds>` — Set the music phase length.
-- `/baa game [arena_id] block_party searchtime <seconds>` — Set the time to find the color.
-- `/baa game [arena_id] block_party decreasetime <seconds>` — Decrease the search time per round.
-- `/baa game [arena_id] block_party mintime <seconds>` — Set the minimum search time.
+- `/baa game [arena_id] block_party musictime <seconds>` — Set the music phase length (optional).
+- `/baa game [arena_id] block_party searchtime <seconds>` — Set the time to find the color (optional).
+- `/baa game [arena_id] block_party decreasetime <seconds>` — Decrease the search time per round (optional).
+- `/baa game [arena_id] block_party mintime <seconds>` — Set the minimum search time (optional).
 
 ## Technical details
 - **Minigame ID:** `block_party`

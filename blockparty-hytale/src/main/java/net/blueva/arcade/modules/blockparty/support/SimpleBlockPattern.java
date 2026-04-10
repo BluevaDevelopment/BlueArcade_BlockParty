@@ -2,8 +2,8 @@ package net.blueva.arcade.modules.blockparty.support;
 
 import net.blueva.arcade.api.world.BlockPattern;
 import net.blueva.arcade.api.world.BlocksAPI;
+import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +13,9 @@ import java.util.Random;
 
 public class SimpleBlockPattern implements BlockPattern<Location, String> {
     private final Map<Location, String> blocks;
-    private final BlocksAPI<Location, String, BlockState> blocksAPI;
+    private final BlocksAPI<Location, String, Holder> blocksAPI;
 
-    public SimpleBlockPattern(BlocksAPI<Location, String, BlockState> blocksAPI, Map<Location, String> blocks) {
+    public SimpleBlockPattern(BlocksAPI<Location, String, Holder> blocksAPI, Map<Location, String> blocks) {
         this.blocksAPI = blocksAPI;
         this.blocks = blocks == null ? new HashMap<>() : new HashMap<>(blocks);
     }

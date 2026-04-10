@@ -120,7 +120,7 @@ public class PowerupService {
         if (context == null) {
             return;
         }
-        if (!context.isPlayerPlaying(player)) {
+        if (!context.isPlayerPlaying(player) || context.getSpectators().contains(player)) {
             return;
         }
 
@@ -348,7 +348,9 @@ public class PowerupService {
             for (int z = -module.getSettings().getPatchRadius(); z <= module.getSettings().getPatchRadius(); z++) {
                 Location loc = new Location(world, center.getBlockX() + x, minY, center.getBlockZ() + z);
                 if (state.getFloor().contains(loc)) {
-                    loc.getBlock().setType(state.getTargetMaterial());
+                    Location blockLocation = loc.getBlock().getLocation();
+                    blockLocation.getBlock().setType(state.getTargetMaterial());
+                    state.getCurrentBlocks().put(blockLocation, state.getTargetMaterial());
                 }
             }
         }

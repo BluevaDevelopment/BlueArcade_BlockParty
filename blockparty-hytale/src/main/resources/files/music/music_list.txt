@@ -1,0 +1,19 @@
+# Block Party bundled music playlist
+# Each line is a MIDI filename (without the .midi extension).
+# These files are bundled with the module and will be extracted on first start.
+Megalovania
+Never_Gonna_Give_You_Up
+Bad_Apple
+Axel_F
+Imperial_March
+Harry_Potter
+Game_Of_Thrones
+Cantina_Band
+Indiana_Jones
+Giornos_Theme
+Spider_Dance
+Halloween
+Mortal_Kombat
+Mario_Underworld
+Drunken_Sailor
+We_Will_Rock_You

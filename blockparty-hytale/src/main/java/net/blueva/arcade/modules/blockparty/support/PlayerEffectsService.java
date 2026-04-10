@@ -9,7 +9,7 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
+import com.hypixel.hytale.component.Holder;
 
 import java.util.List;
 
@@ -77,7 +77,7 @@ public class PlayerEffectsService {
         }
     }
 
-    public void clearPlayerInventories(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    public void clearPlayerInventories(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         for (Player player : context.getAlivePlayers()) {
             clearInventory(player);
         }

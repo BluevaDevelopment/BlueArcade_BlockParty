@@ -258,6 +258,11 @@ public class BlockPartyGame {
             return;
         }
 
+        // Don't eliminate spectators
+        if (context.getSpectators().contains(player)) {
+            return;
+        }
+
         int arenaId = context.getArenaId();
         Set<UUID> arenaEliminations = eliminatedPlayers.computeIfAbsent(arenaId, id -> ConcurrentHashMap.newKeySet());
         if (!arenaEliminations.add(player.getUniqueId())) {
@@ -652,6 +657,11 @@ public class BlockPartyGame {
 
     private void broadcastDeathMessage(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
                                        Player victim) {
+        // Don't broadcast death messages for spectators
+        if (context.getSpectators().contains(victim)) {
+            return;
+        }
+
         String message = getRandomMessage("messages.deaths.generic");
         if (message == null) {
             return;

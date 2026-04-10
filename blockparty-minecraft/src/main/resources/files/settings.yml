@@ -8,6 +8,8 @@ menus:
     item: MUSIC_DISC_MELLOHI
 
 gameplay:
+  # Default gameplay values for this module.
+  # You can override these per arena with /baa game setup commands when available.
   # How far below the lowest floor a player must fall to be eliminated
   elimination_margin: 1.0
   # Seconds to let music play before revealing the target block

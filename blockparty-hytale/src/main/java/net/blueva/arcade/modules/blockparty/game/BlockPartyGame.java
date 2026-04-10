@@ -21,7 +21,7 @@ import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
+import com.hypixel.hytale.component.Holder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +31,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public class BlockPartyGame {
+
 
     private final BlockPartyModule module;
     private final PatternService patternService;
@@ -40,15 +43,16 @@ public class BlockPartyGame {
     private final PlayerEffectsService playerEffectsService;
     private final FallingBlockService fallingBlockService;
 
-    private final Map<Integer, GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity>> activeGames =
+    private final Map<Integer, GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity>> activeGames =
             new ConcurrentHashMap<>();
-    private final Map<Player, Integer> playerArenas = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> playerArenas = new ConcurrentHashMap<>();
     private final Map<Integer, FloorBounds> arenaFloors = new ConcurrentHashMap<>();
     private final Map<Integer, FloorBounds> arenaBounds = new ConcurrentHashMap<>();
     private final Map<Integer, BlockPartyState> arenaStates = new ConcurrentHashMap<>();
     private final Map<Integer, Boolean> gameEnded = new ConcurrentHashMap<>();
     private final Map<Integer, UUID> arenaWinners = new ConcurrentHashMap<>();
     private final Map<Integer, Set<UUID>> eliminatedPlayers = new ConcurrentHashMap<>();
+    private final Map<Integer, AtomicInteger> movementTickCounters = new ConcurrentHashMap<>();
 
     public BlockPartyGame(BlockPartyModule module) {
         this.module = module;
@@ -58,7 +62,7 @@ public class BlockPartyGame {
         this.fallingBlockService = new FallingBlockService(module);
     }
 
-    public void onStart(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    public void onStart(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         context.getSchedulerAPI().cancelArenaTasks(arenaId);
 
@@ -80,13 +84,13 @@ public class BlockPartyGame {
         arenaStates.put(arenaId, state);
 
         for (Player player : context.getPlayers()) {
-            playerArenas.put(player, arenaId);
+            playerArenas.put(player.getUuid(), arenaId);
         }
 
         sendDescription(context);
     }
 
-    public void onCountdownTick(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    public void onCountdownTick(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                 int secondsLeft) {
         for (Player player : context.getPlayers()) {
             if (player == null) {
@@ -107,7 +111,7 @@ public class BlockPartyGame {
         }
     }
 
-    public void onCountdownFinish(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    public void onCountdownFinish(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         for (Player player : context.getPlayers()) {
             if (player == null) {
                 continue;
@@ -124,7 +128,7 @@ public class BlockPartyGame {
         }
     }
 
-    public void onGameStart(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    public void onGameStart(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         BlockPartyState state = arenaStates.get(arenaId);
         if (state == null) {
@@ -150,7 +154,7 @@ public class BlockPartyGame {
         }
     }
 
-    public void onEnd(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    public void onEnd(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                       GameResult<Player> result) {
         int arenaId = context.getArenaId();
 
@@ -166,8 +170,9 @@ public class BlockPartyGame {
         arenaFloors.remove(arenaId);
         arenaStates.remove(arenaId);
         eliminatedPlayers.remove(arenaId);
+        movementTickCounters.remove(arenaId);
         for (Player player : context.getPlayers()) {
-            playerArenas.remove(player);
+            playerArenas.remove(player.getUuid());
         }
 
         if (module.getStatsAPI() != null) {
@@ -183,7 +188,7 @@ public class BlockPartyGame {
 
     public void onDisable() {
         if (!activeGames.isEmpty()) {
-            GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> anyContext =
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> anyContext =
                     activeGames.values().iterator().next();
             anyContext.getSchedulerAPI().cancelModuleTasks(module.getModuleInfo().getId());
         }
@@ -194,6 +199,7 @@ public class BlockPartyGame {
         arenaFloors.clear();
         arenaStates.clear();
         eliminatedPlayers.clear();
+        movementTickCounters.clear();
         powerupService.clearAll();
         fallingBlockService.cleanupAllFallingBlocks();
     }
@@ -201,7 +207,7 @@ public class BlockPartyGame {
     public Map<String, String> getCustomPlaceholders(Player player) {
         Map<String, String> placeholders = new HashMap<>();
 
-        GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context = getGameContext(player);
+        GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context = getGameContext(player);
         if (context != null) {
             placeholders.put("alive", String.valueOf(context.getAlivePlayers().size()));
             placeholders.put("spectators", String.valueOf(context.getSpectators().size()));
@@ -220,15 +226,15 @@ public class BlockPartyGame {
         return placeholders;
     }
 
-    public GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> getGameContext(Player player) {
-        Integer arenaId = playerArenas.get(player);
+    public GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> getGameContext(Player player) {
+        Integer arenaId = playerArenas.get(player.getUuid());
         if (arenaId == null) {
             return null;
         }
         return activeGames.get(arenaId);
     }
 
-    public GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> getGameContextFromArena(int arenaId) {
+    public GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> getGameContextFromArena(int arenaId) {
         return activeGames.get(arenaId);
     }
 
@@ -237,8 +243,13 @@ public class BlockPartyGame {
     }
 
     public void handlePlayerElimination(Player player) {
-        GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context = getGameContext(player);
+        GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context = getGameContext(player);
         if (context == null) {
+            return;
+        }
+
+        // Don't eliminate spectators
+        if (context.getSpectators().contains(player)) {
             return;
         }
 
@@ -271,10 +282,10 @@ public class BlockPartyGame {
     }
 
     public void removePlayerArena(Player player) {
-        playerArenas.remove(player);
+        playerArenas.remove(player.getUuid());
     }
 
-    private BlockPartyState createState(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private BlockPartyState createState(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                         FloorBounds floor) {
         Map<String, BlockPattern<Location, String>> patterns = patternService.loadPatterns(context, floor);
         List<String> order = new ArrayList<>(patterns.keySet());
@@ -306,7 +317,7 @@ public class BlockPartyGame {
         return new BlockPartyState(context.getArenaId(), floor, patterns, order, initialPatternKey, startingSearchTime);
     }
 
-    private void sendDescription(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void sendDescription(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         List<String> description = module.getModuleConfig().getStringListFrom("language.yml", "description.default");
         for (Player player : context.getPlayers()) {
             for (String line : description) {
@@ -315,7 +326,7 @@ public class BlockPartyGame {
         }
     }
 
-    private void sendStartTitle(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void sendStartTitle(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         String title = module.getCoreConfig().getLanguage("titles.game_started.title")
                 .replace("{game_display_name}", module.getModuleInfo().getName());
         String subtitle = module.getCoreConfig().getLanguage("titles.game_started.subtitle")
@@ -326,7 +337,7 @@ public class BlockPartyGame {
         }
     }
 
-    private void startGameLoop(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void startGameLoop(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                BlockPartyState state) {
         int arenaId = context.getArenaId();
         String taskId = "arena_" + arenaId + "_block_party_loop";
@@ -352,7 +363,7 @@ public class BlockPartyGame {
         }, 1L, 1L);
     }
 
-    private void startRound(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void startRound(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                             BlockPartyState state,
                             boolean firstRound) {
         if (state.isEnded() || gameEnded.getOrDefault(state.getArenaId(), false)) {
@@ -399,7 +410,7 @@ public class BlockPartyGame {
                 if (state.isMusicPaused()) {
                     context.getSoundsAPI().resumeMusic(player);
                 } else {
-                    context.getSoundsAPI().play(player, musicTrack);
+                    context.getSoundsAPI().playNBS(player, musicTrack);
                 }
             }
         }
@@ -407,7 +418,7 @@ public class BlockPartyGame {
         state.setMusicPaused(false);
     }
 
-    private void advancePhase(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void advancePhase(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                               BlockPartyState state) {
         if (state.getPhase() == RoundPhase.MUSIC) {
             revealTarget(context, state);
@@ -427,7 +438,7 @@ public class BlockPartyGame {
         }
     }
 
-    private void revealTarget(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void revealTarget(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                               BlockPartyState state) {
         state.setPhase(RoundPhase.SEARCH);
         state.setPhaseTicksRemaining(BlockPartyUtils.secondsToTicks(state.getSearchSeconds()));
@@ -442,7 +453,7 @@ public class BlockPartyGame {
         }
     }
 
-    private void collapseFloor(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void collapseFloor(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                BlockPartyState state) {
         if (state.getCurrentBlocks() == null || state.getCurrentBlocks().isEmpty()) {
             return;
@@ -480,7 +491,7 @@ public class BlockPartyGame {
         state.setSearchSeconds(Math.max(module.getSettings().getMinSearchTime(), state.getSearchSeconds() - module.getSettings().getDecreaseTime()));
     }
 
-    private void evaluateSurvival(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void evaluateSurvival(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                   BlockPartyState state) {
         List<Player> alivePlayers = new ArrayList<>(context.getAlivePlayers());
         for (Player player : alivePlayers) {
@@ -501,7 +512,7 @@ public class BlockPartyGame {
         }
     }
 
-    private void applyPattern(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void applyPattern(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                               BlockPattern<Location, String> pattern) {
         if (pattern == null) {
             return;
@@ -513,7 +524,7 @@ public class BlockPartyGame {
         return playlist.get(ThreadLocalRandom.current().nextInt(playlist.size()));
     }
 
-    private void startRegionParticles(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void startRegionParticles(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         // Hytale runtime does not yet expose particle effects.
     }
 
@@ -521,7 +532,7 @@ public class BlockPartyGame {
         // Hytale runtime does not yet expose particle effects.
     }
 
-    private void updateActionBars(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void updateActionBars(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                   BlockPartyState state) {
         List<Player> players = context.getPlayers();
         boolean showCountdown = state.getPhase() == RoundPhase.SEARCH;
@@ -552,44 +563,59 @@ public class BlockPartyGame {
         }
     }
 
-    private void startMovementTracking(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void startMovementTracking(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         String taskId = "arena_" + arenaId + "_block_party_movement";
         if (context.getSchedulerAPI().isTaskRunning(taskId)) {
             return;
         }
-        context.getSchedulerAPI().runTimer(taskId, () -> handleMovementTick(context), 0L, 5L);
+        Location worldLocation = context.getArenaAPI().getRandomSpawn();
+        if (worldLocation == null) {
+            worldLocation = context.getArenaAPI().getBoundsMin();
+        }
+        if (worldLocation != null) {
+            context.getSchedulerAPI().runTimer(taskId, () -> handleMovementTick(context), 0L, 5L);
+        } else {
+            context.getSchedulerAPI().runTimer(taskId, () -> handleMovementTick(context), 0L, 5L);
+        }
     }
 
-    private void handleMovementTick(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void handleMovementTick(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
+        int arenaId = context.getArenaId();
+        int tickCount = movementTickCounters.computeIfAbsent(arenaId, id -> new AtomicInteger()).incrementAndGet();
         for (Player player : context.getPlayers()) {
             if (player == null) {
                 continue;
             }
-            if (!context.isPlayerPlaying(player)) {
-                continue;
-            }
-            Location current = resolvePlayerLocation(player);
-            if (current == null) {
-                continue;
-            }
-
-            if (context.getPhase() != GamePhase.PLAYING) {
-                continue;
-            }
-
-            if (shouldEliminate(context, current)) {
-                handlePlayerElimination(player);
-                continue;
-            }
-
-            Location powerupLocation = BlockPartyUtils.offsetBlockLocation(current, 0, 1, 0);
-            powerupService.handlePowerupPickup(player, powerupLocation);
+            handleMovementTickForPlayer(context, player);
         }
     }
 
-    private boolean shouldEliminate(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
-                                    Location location) {
+    private void handleMovementTickForPlayer(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
+                                             Player player) {
+        if (!context.isPlayerPlaying(player)) {
+            return;
+        }
+        Location current = resolvePlayerLocation(player);
+        if (current == null) {
+            return;
+        }
+
+        if (context.getPhase() != GamePhase.PLAYING) {
+            return;
+        }
+
+        if (shouldEliminate(context, current)) {
+            handlePlayerElimination(player);
+            return;
+        }
+
+        Location powerupLocation = BlockPartyUtils.offsetBlockLocation(current, 0, 1, 0);
+        powerupService.handlePowerupPickup(player, powerupLocation);
+    }
+
+    public boolean shouldEliminate(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
+                                   Location location) {
         if (!context.isInsideBounds(location)) {
             return true;
         }
@@ -622,8 +648,13 @@ public class BlockPartyGame {
         return new Location(player.getWorld().getName(), position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
     }
 
-    private void broadcastDeathMessage(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private void broadcastDeathMessage(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                        Player victim) {
+        // Don't broadcast death messages for spectators
+        if (context.getSpectators().contains(victim)) {
+            return;
+        }
+
         String message = getRandomMessage("messages.deaths.generic");
         if (message == null) {
             return;
@@ -645,8 +676,7 @@ public class BlockPartyGame {
         int index = java.util.concurrent.ThreadLocalRandom.current().nextInt(messages.size());
         return messages.get(index);
     }
-
-    private void endGameOnce(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void endGameOnce(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
 
         Boolean wasEnded = gameEnded.put(arenaId, true);
@@ -671,7 +701,7 @@ public class BlockPartyGame {
             return;
         }
 
-        Integer arenaId = playerArenas.get(player);
+        Integer arenaId = playerArenas.get(player.getUuid());
         if (arenaId == null) {
             return;
         }
@@ -683,7 +713,7 @@ public class BlockPartyGame {
         }
     }
 
-    private FloorBounds cacheFloorBounds(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private FloorBounds cacheFloorBounds(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         FloorBounds bounds = findFloorBounds(context);
         if (bounds != null) {
@@ -692,7 +722,7 @@ public class BlockPartyGame {
         return bounds;
     }
 
-    private FloorBounds cacheArenaBounds(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+    private FloorBounds cacheArenaBounds(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                          FloorBounds fallback) {
         int arenaId = context.getArenaId();
         FloorBounds bounds = findArenaBounds(context);
@@ -705,7 +735,7 @@ public class BlockPartyGame {
         return bounds;
     }
 
-    private FloorBounds findFloorBounds(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private FloorBounds findFloorBounds(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         Location storedMin = context.getDataAccess().getGameLocation("game.floor.bounds.min");
         Location storedMax = context.getDataAccess().getGameLocation("game.floor.bounds.max");
 
@@ -722,7 +752,7 @@ public class BlockPartyGame {
         return null;
     }
 
-    private FloorBounds findArenaBounds(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private FloorBounds findArenaBounds(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         Location min = context.getDataAccess().getArenaLocation("bounds.min");
         Location max = context.getDataAccess().getArenaLocation("bounds.max");
         if (min != null && max != null) {
@@ -731,7 +761,7 @@ public class BlockPartyGame {
         return null;
     }
 
-    private void resetFloor(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void resetFloor(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         int arenaId = context.getArenaId();
         BlockPartyState state = arenaStates.get(arenaId);
         if (state == null || state.getCurrentPattern() == null) {
@@ -744,7 +774,7 @@ public class BlockPartyGame {
         return "scoreboard.main";
     }
 
-    private void scheduleMaxGameTime(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private void scheduleMaxGameTime(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         if (!module.getSettings().isRespectMaxGameTime()) {
             return;
         }
@@ -774,7 +804,7 @@ public class BlockPartyGame {
     }
 
     public BlockPartyState getStateForPlayer(Player player) {
-        GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context = getGameContext(player);
+        GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context = getGameContext(player);
         if (context == null) {
             return null;
         }

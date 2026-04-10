@@ -11,7 +11,7 @@ import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
+import com.hypixel.hytale.component.Holder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ public class PatternService {
     }
 
     public Map<String, BlockPattern<Location, String>> loadPatterns(
-            GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
             FloorBounds floor
     ) {
         Map<String, BlockPattern<Location, String>> patterns = new LinkedHashMap<>();
@@ -62,7 +62,7 @@ public class PatternService {
     }
 
     public BlockPattern<Location, String> createFallbackPattern(
-            GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context,
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
             FloorBounds floor
     ) {
         Map<Location, String> map = new HashMap<>();
@@ -137,7 +137,7 @@ public class PatternService {
         return names;
     }
 
-    private FloorBounds findFloorBounds(GameContext<Player, Location, World, String, ItemStack, String, BlockState, Entity> context) {
+    private FloorBounds findFloorBounds(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
         Location storedMin = context.getDataAccess().getGameLocation("game.floor.bounds.min");
         Location storedMax = context.getDataAccess().getGameLocation("game.floor.bounds.max");
 

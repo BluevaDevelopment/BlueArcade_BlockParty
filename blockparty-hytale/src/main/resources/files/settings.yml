@@ -75,9 +75,10 @@ powerups:
     speed: 0.12
 
 music:
-  # Add your NoteBlock (.nbs) files inside the module's music folder.
-  # The module automatically reads:
-  # /plugins/BlueArcade/modules/block_party/music
+  # Block Party ships with 16 bundled .midi songs that are automatically extracted
+  # to the module's music folder on first start. You can add your own .midi files
+  # to the music folder at any time; they will be picked up on the next reload.
+  # Music folder: /BlueArcade/modules/block_party/music/
 
 # Game items (optional)
 items:
