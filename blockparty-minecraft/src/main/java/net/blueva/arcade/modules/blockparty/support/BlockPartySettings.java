@@ -50,7 +50,7 @@ public class BlockPartySettings {
     private int speedAmplifier = 1;
     private int patchRadius = 2;
     private boolean powerupParticlesEnabled = true;
-    private Particle powerupParticleType = Particle.WITCH;
+    private Particle powerupParticleType = BlockPartyUtils.parseParticle("WITCH");
     private int powerupParticleCount = 12;
     private double powerupParticleSpread = 0.35;
     private double powerupParticleSpeed = 0.12;

@@ -21,8 +21,8 @@ public final class BlockPartyUtils {
     public static Particle parseParticle(String name) {
         try {
             String upper = name.toUpperCase(Locale.ENGLISH);
-            if ("SPELL_WITCH".equals(upper)) {
-                upper = "WITCH";
+            if ("WITCH".equals(upper)) {
+                upper = "SPELL_WITCH";
             }
             return Particle.valueOf(upper);
         } catch (Exception e) {
