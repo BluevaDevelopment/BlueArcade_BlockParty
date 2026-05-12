@@ -140,7 +140,7 @@ public class BlockPartyGame {
         scheduleMaxGameTime(context);
 
         for (Player player : context.getPlayers()) {
-            player.setGameMode(GameMode.SURVIVAL);
+            player.setGameMode(GameMode.valueOf(GameMode.class, module.getModuleConfig().getStringFrom("settings.yml", "gameplay.game_mode", "SURVIVAL").toUpperCase()));
             playerEffectsService.giveStartingItems(player);
             playerEffectsService.applyStartingEffects(player);
             context.getScoreboardAPI().showScoreboard(player, getScoreboardPath());
