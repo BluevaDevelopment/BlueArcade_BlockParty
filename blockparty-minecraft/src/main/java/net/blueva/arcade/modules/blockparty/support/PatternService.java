@@ -42,7 +42,8 @@ public class PatternService {
             }
             BlockPattern pattern = context.getBlocksAPI().parsePattern(raw);
             if (pattern != null) {
-                patterns.put(name, pattern);
+                // Temporary workaround until API 3.4 makes BlocksAPI resolve dynamic arena worlds contextually.
+                patterns.put(name, normalizePatternWorld(context, floor, pattern));
             }
         }
 
@@ -57,6 +58,38 @@ public class PatternService {
         }
 
         return patterns;
+    }
+
+    private BlockPattern normalizePatternWorld(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                               FloorBounds floor,
+                                               BlockPattern pattern) {
+        World world = resolvePatternWorld(context, floor);
+        if (world == null) {
+            return pattern;
+        }
+
+        Map<Location, Material> normalized = new LinkedHashMap<>();
+        for (Object rawEntry : pattern.getBlocks().entrySet()) {
+            Map.Entry<?, ?> entry = (Map.Entry<?, ?>) rawEntry;
+            if (!(entry.getKey() instanceof Location location) || !(entry.getValue() instanceof Material material)) {
+                continue;
+            }
+            normalized.put(new Location(world, location.getX(), location.getY(), location.getZ(),
+                    location.getYaw(), location.getPitch()), material);
+        }
+        return new SimpleBlockPattern(normalized);
+    }
+
+    private World resolvePatternWorld(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                      FloorBounds floor) {
+        World world = context.getArenaAPI().getWorld();
+        if (world != null) {
+            return world;
+        }
+        if (floor != null && floor.min() != null) {
+            return floor.min().getWorld();
+        }
+        return null;
     }
 
     public BlockPattern createFallbackPattern(FloorBounds floor) {
