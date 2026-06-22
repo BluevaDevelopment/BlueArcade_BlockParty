@@ -69,7 +69,7 @@ action_bar:
 setup_messages:
   set_success: "{prefix} <green>Floor area set: {blocks} blocks ({x}×{y}×{z})</green>"
   must_use_stick: "{prefix} <red>Use the Magic Stick to select the floor region first.</red>"
-  not_configured: "{prefix} <red>Floor or patterns are not configured! Use /baa game {arena_id} block_party floor set</red>"
+  not_configured: "{prefix} <red>The floor is missing, or static mode has no saved patterns.</red>"
   usage_floor: "{prefix} <yellow>Usage: /baa game <id> block_party floor set</yellow>"
   usage_pattern_add: "{prefix} <yellow>Usage: /baa game <id> block_party pattern add <name></yellow>"
   usage_pattern_remove: "{prefix} <yellow>Usage: /baa game <id> block_party pattern remove <name></yellow>"
@@ -88,6 +88,13 @@ setup_messages:
   usage_decrease_time: "{prefix} <yellow>Usage: /baa game <id> block_party decreasetime <seconds></yellow>"
   usage_min_time: "{prefix} <yellow>Usage: /baa game <id> block_party mintime <seconds></yellow>"
   time_updated: "{prefix} <green>Updated <yellow>{key}</yellow> to <yellow>{value}</yellow>.</green>"
+  usage_procedural: "{prefix} <yellow>Usage: /baa game <id> block_party procedural <on|off|status|templates></yellow>"
+  usage_procedural_templates: "{prefix} <yellow>Usage: /baa game <id> block_party procedural templates <all|type...></yellow>"
+  procedural_enabled: "{prefix} <green>Procedural patterns enabled.</green>"
+  procedural_disabled: "{prefix} <yellow>Procedural patterns disabled. Saved patterns will be used.</yellow>"
+  procedural_status: "{prefix} <gray>Procedural: <yellow>{enabled}</yellow>, templates: <yellow>{templates}</yellow></gray>"
+  procedural_templates_updated: "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>"
+  procedural_templates_invalid: "{prefix} <red>No valid procedural templates were provided.</red>"
 
 powerup_names:
   TELEPORT: "Teleporter"

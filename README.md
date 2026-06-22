@@ -50,6 +50,23 @@ Finish the setup with the commands below:
 - `/baa game [arena_id] block_party decreasetime <seconds>` — Decrease the search time per round (optional).
 - `/baa game [arena_id] block_party mintime <seconds>` — Set the minimum search time (optional).
 
+### Procedural patterns (Minecraft)
+The Minecraft edition can generate a fresh floor pattern for every round. Existing arenas remain in static mode
+until procedural patterns are explicitly enabled.
+
+- `/baa game [arena_id] block_party procedural on` — Enable runtime-generated patterns.
+- `/baa game [arena_id] block_party procedural off` — Return to saved patterns.
+- `/baa game [arena_id] block_party procedural status` — Show the arena's current mode and template list.
+- `/baa game [arena_id] block_party procedural templates all` — Enable every built-in template.
+- `/baa game [arena_id] block_party procedural templates <type...>` — Restrict generation to selected templates.
+
+Available templates: `stripes`, `diagonal`, `rainbow`, `checker`, `rings`, `sectors`, `islands`, `waves`,
+`spiral`, `creeper`, and `mosaic`.
+
+Pattern size and color count scale with the round number. Their defaults are configured under
+`procedural_patterns` in the module's `settings.yml`. Procedural arenas only require floor bounds; saved patterns
+remain optional and are not modified or removed.
+
 ## Technical details
 - **Minigame ID:** `block_party`
 - **Module Type:** `MINIGAME`

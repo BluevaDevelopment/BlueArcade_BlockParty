@@ -25,6 +25,16 @@ public class BlockPartySettings {
     private int targetItemSlot = 4;
     private boolean respectMaxGameTime = false;
 
+    private final List<String> proceduralTemplates = new ArrayList<>();
+    private int proceduralNoRepeat = 3;
+    private int proceduralInitialSize = 8;
+    private int proceduralMinSize = 2;
+    private int proceduralSizeDecreaseEvery = 3;
+    private int proceduralInitialColors = 4;
+    private int proceduralMaxColors = 16;
+    private int proceduralColorIncreaseEvery = 2;
+    private int proceduralMinTargetBlocks = 32;
+
     private boolean fallingBlocksEnabled = true;
     private double fallingDownwardVelocity = 0.3;
     private double fallingHorizontalRandomness = 0.08;
@@ -68,6 +78,33 @@ public class BlockPartySettings {
         giveTargetItem = moduleConfig.getBoolean("gameplay.give_target_item", true);
         targetItemSlot = moduleConfig.getInt("gameplay.target_item_slot", 4);
         respectMaxGameTime = moduleConfig.getBoolean("gameplay.respect_max_game_time", false);
+
+        proceduralTemplates.clear();
+        for (String value : moduleConfig.getStringList("procedural_patterns.templates")) {
+            String template = value.trim().toLowerCase(Locale.ROOT);
+            if (!template.isEmpty()) {
+                proceduralTemplates.add(template);
+            }
+        }
+        if (proceduralTemplates.isEmpty()) {
+            proceduralTemplates.addAll(List.of(
+                    "stripes", "diagonal", "rainbow", "checker", "rings", "sectors",
+                    "islands", "waves", "spiral", "creeper", "mosaic"
+            ));
+        }
+        proceduralNoRepeat = Math.max(0, moduleConfig.getInt("procedural_patterns.no_repeat", 3));
+        proceduralInitialSize = Math.max(1, moduleConfig.getInt("procedural_patterns.difficulty.initial_size", 8));
+        proceduralMinSize = Math.max(1, moduleConfig.getInt("procedural_patterns.difficulty.min_size", 2));
+        proceduralSizeDecreaseEvery = Math.max(1,
+                moduleConfig.getInt("procedural_patterns.difficulty.size_decrease_every", 3));
+        proceduralInitialColors = Math.max(2,
+                moduleConfig.getInt("procedural_patterns.difficulty.initial_colors", 4));
+        proceduralMaxColors = Math.max(proceduralInitialColors,
+                moduleConfig.getInt("procedural_patterns.difficulty.max_colors", 16));
+        proceduralColorIncreaseEvery = Math.max(1,
+                moduleConfig.getInt("procedural_patterns.difficulty.color_increase_every", 2));
+        proceduralMinTargetBlocks = Math.max(1,
+                moduleConfig.getInt("procedural_patterns.min_target_blocks", 32));
 
         fallingBlocksEnabled = moduleConfig.getBoolean("gameplay.falling_blocks.enabled", true);
         fallingDownwardVelocity = moduleConfig.getDouble("gameplay.falling_blocks.downward_velocity", 0.3);
@@ -161,6 +198,28 @@ public class BlockPartySettings {
 
     public boolean isRespectMaxGameTime() {
         return respectMaxGameTime;
+    }
+
+    public List<String> getProceduralTemplates() {
+        return List.copyOf(proceduralTemplates);
+    }
+
+    public int getProceduralNoRepeat() {
+        return proceduralNoRepeat;
+    }
+
+    public int getProceduralSize(int round) {
+        int decreases = Math.max(0, round - 1) / proceduralSizeDecreaseEvery;
+        return Math.max(proceduralMinSize, proceduralInitialSize - decreases);
+    }
+
+    public int getProceduralColorCount(int round) {
+        int increases = Math.max(0, round - 1) / proceduralColorIncreaseEvery;
+        return Math.min(proceduralMaxColors, proceduralInitialColors + increases);
+    }
+
+    public int getProceduralMinTargetBlocks() {
+        return proceduralMinTargetBlocks;
     }
 
     public boolean isFallingBlocksEnabled() {

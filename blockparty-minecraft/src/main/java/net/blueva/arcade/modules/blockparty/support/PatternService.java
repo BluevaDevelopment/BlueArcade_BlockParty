@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PatternService {
 
     private final BlockPartyModule module;
+    private final ProceduralPatternGenerator proceduralGenerator = new ProceduralPatternGenerator();
 
     public PatternService(BlockPartyModule module) {
         this.module = module;
@@ -133,7 +134,9 @@ public class PatternService {
     }
 
     public Material selectTargetMaterial(BlockPattern pattern) {
-        List<Material> materials = pattern.getMaterials();
+        List<Material> materials = pattern instanceof ProceduralBlockPattern procedural
+                ? procedural.getTargetMaterials()
+                : pattern.getMaterials();
         List<Material> valid = new ArrayList<>();
         for (Material material : materials) {
             if (material != null && material != Material.AIR && material != Material.BARRIER) {
@@ -146,6 +149,50 @@ public class PatternService {
                     : module.getSettings().getFallbackMaterials().get(0);
         }
         return valid.get(ThreadLocalRandom.current().nextInt(valid.size()));
+    }
+
+    public BlockPattern createProceduralPattern(
+            GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+            BlockPartyState state) {
+        List<String> candidates = new ArrayList<>(state.getProceduralTemplates());
+        candidates.removeIf(template -> !ProceduralPatternGenerator.TEMPLATE_TYPES.contains(template));
+        if (candidates.isEmpty()) {
+            candidates.addAll(ProceduralPatternGenerator.TEMPLATE_TYPES);
+        }
+
+        List<String> fresh = new ArrayList<>(candidates);
+        fresh.removeAll(state.getRecentProceduralTemplates());
+        if (!fresh.isEmpty()) {
+            candidates = fresh;
+        }
+
+        long roundSeed = mixSeed(state.getMatchSeed(), state.getRound());
+        String template = candidates.get(new java.util.Random(roundSeed).nextInt(candidates.size()));
+        rememberTemplate(state, template);
+
+        World world = resolvePatternWorld(context, state.getFloor());
+        int size = module.getSettings().getProceduralSize(state.getRound());
+        int colors = module.getSettings().getProceduralColorCount(state.getRound());
+        return proceduralGenerator.generate(state.getFloor(), world, template, roundSeed, size, colors,
+                module.getSettings().getProceduralMinTargetBlocks());
+    }
+
+    private void rememberTemplate(BlockPartyState state, String template) {
+        int limit = module.getSettings().getProceduralNoRepeat();
+        if (limit <= 0) {
+            return;
+        }
+        state.getRecentProceduralTemplates().addLast(template);
+        while (state.getRecentProceduralTemplates().size() > limit) {
+            state.getRecentProceduralTemplates().removeFirst();
+        }
+    }
+
+    private long mixSeed(long seed, int round) {
+        long mixed = seed + 0x9E3779B97F4A7C15L * round;
+        mixed = (mixed ^ (mixed >>> 30)) * 0xBF58476D1CE4E5B9L;
+        mixed = (mixed ^ (mixed >>> 27)) * 0x94D049BB133111EBL;
+        return mixed ^ (mixed >>> 31);
     }
 
     private List<String> parseIndex(String index) {

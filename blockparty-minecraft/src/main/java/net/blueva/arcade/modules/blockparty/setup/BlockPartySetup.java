@@ -7,6 +7,7 @@ import net.blueva.arcade.api.setup.SetupSelectionAPI;
 import net.blueva.arcade.api.setup.TabCompleteContext;
 import net.blueva.arcade.api.setup.TabCompleteResult;
 import net.blueva.arcade.modules.blockparty.BlockPartyModule;
+import net.blueva.arcade.modules.blockparty.support.ProceduralPatternGenerator;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.Material;
@@ -36,6 +37,7 @@ public class BlockPartySetup implements GameSetupHandler {
         return switch (subcommand) {
             case "floor" -> handleFloor(context);
             case "pattern" -> handlePattern(context);
+            case "procedural" -> handleProcedural(context);
             case "musictime" -> handleTime(context, "basic.initial_music_time",
                     module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_music_time"));
             case "searchtime" -> handleTime(context, "basic.search_time",
@@ -71,6 +73,18 @@ public class BlockPartySetup implements GameSetupHandler {
             }
         }
 
+        if ("procedural".equals(sub)) {
+            if (relIndex == 0) {
+                return TabCompleteResult.of("on", "off", "status", "templates");
+            }
+            if (relIndex >= 1 && "templates".equalsIgnoreCase(context.getArg(context.getStartIndex()))) {
+                List<String> values = new ArrayList<>();
+                values.add("all");
+                values.addAll(ProceduralPatternGenerator.TEMPLATE_TYPES);
+                return TabCompleteResult.of(values.toArray(String[]::new));
+            }
+        }
+
         if (relIndex == 0) {
             switch (sub) {
                 case "floor":
@@ -90,7 +104,7 @@ public class BlockPartySetup implements GameSetupHandler {
 
     @Override
     public List<String> getSubcommands() {
-        return Arrays.asList("floor", "pattern", "musictime", "searchtime", "decreasetime", "mintime");
+        return Arrays.asList("floor", "pattern", "procedural", "musictime", "searchtime", "decreasetime", "mintime");
     }
 
     @Override
@@ -102,15 +116,119 @@ public class BlockPartySetup implements GameSetupHandler {
         SetupDataAPI data = context.getData();
 
         boolean hasFloor = data.has("game.floor.bounds.min.x") && data.has("game.floor.bounds.max.x");
-        boolean hasPatterns = data.getString("game.patterns.index") != null;
+        boolean hasPatterns = !parseIndex(data.getString("game.patterns.index")).isEmpty();
+        boolean procedural = data.getBoolean("game.procedural.enabled", false);
 
-        if (!hasFloor || !hasPatterns) {
+        if (!hasFloor || (!hasPatterns && !procedural)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
                     module.getModuleConfig().getStringFrom("language.yml", "setup_messages.not_configured")
                             .replace("{arena_id}", String.valueOf(context.getArenaId())));
         }
 
-        return hasFloor && hasPatterns;
+        return hasFloor && (hasPatterns || procedural);
+    }
+
+    private boolean handleProcedural(SetupContext<Player, CommandSender, Location> context) {
+        if (!context.hasHandlerArgs(1)) {
+            send(context, "setup_messages.usage_procedural",
+                    "{prefix} <yellow>Usage: /baa game <id> block_party procedural <on|off|status|templates></yellow>");
+            return true;
+        }
+
+        String action = context.getHandlerArg(0).toLowerCase(Locale.ENGLISH);
+        SetupDataAPI data = context.getData();
+        switch (action) {
+            case "on" -> {
+                data.setBoolean("game.procedural.enabled", true);
+                data.save();
+                send(context, "setup_messages.procedural_enabled",
+                        "{prefix} <green>Procedural patterns enabled.</green>");
+            }
+            case "off" -> {
+                data.setBoolean("game.procedural.enabled", false);
+                data.save();
+                send(context, "setup_messages.procedural_disabled",
+                        "{prefix} <yellow>Procedural patterns disabled. Saved patterns will be used.</yellow>");
+            }
+            case "status" -> {
+                boolean enabled = data.getBoolean("game.procedural.enabled", false);
+                String templates = data.getString("game.procedural.templates");
+                if (templates == null || templates.isBlank()) {
+                    templates = "all";
+                }
+                send(context, "setup_messages.procedural_status",
+                        "{prefix} <gray>Procedural: <yellow>{enabled}</yellow>, templates: <yellow>{templates}</yellow></gray>",
+                        "{enabled}", enabled ? "on" : "off", "{templates}", templates);
+            }
+            case "templates" -> handleProceduralTemplates(context, data);
+            default -> send(context, "setup_messages.usage_procedural",
+                    "{prefix} <yellow>Usage: /baa game <id> block_party procedural <on|off|status|templates></yellow>");
+        }
+        return true;
+    }
+
+    private void handleProceduralTemplates(SetupContext<Player, CommandSender, Location> context, SetupDataAPI data) {
+        if (!context.hasHandlerArgs(2)) {
+            send(context, "setup_messages.usage_procedural_templates",
+                    "{prefix} <yellow>Usage: /baa game <id> block_party procedural templates <all|type...></yellow>");
+            return;
+        }
+
+        List<String> templates = new ArrayList<>();
+        boolean useAllTemplates = false;
+        int index = 1;
+        while (context.hasHandlerArgs(index + 1)) {
+            String[] values = context.getHandlerArg(index).toLowerCase(Locale.ENGLISH).split(",");
+            for (String value : values) {
+                String template = value.trim();
+                if (template.equals("all")) {
+                    useAllTemplates = true;
+                    index = Integer.MAX_VALUE;
+                    break;
+                }
+                if (!template.isEmpty() && ProceduralPatternGenerator.TEMPLATE_TYPES.contains(template)
+                        && !templates.contains(template)) {
+                    templates.add(template);
+                }
+            }
+            if (index == Integer.MAX_VALUE) {
+                break;
+            }
+            index++;
+        }
+
+        if (useAllTemplates) {
+            data.remove("game.procedural.templates");
+            data.save();
+            send(context, "setup_messages.procedural_templates_updated",
+                    "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>",
+                    "{templates}", "all");
+            return;
+        }
+        if (templates.isEmpty()) {
+            send(context, "setup_messages.procedural_templates_invalid",
+                    "{prefix} <red>No valid procedural templates were provided.</red>");
+            return;
+        }
+        data.setString("game.procedural.templates", String.join(",", templates));
+        data.save();
+        send(context, "setup_messages.procedural_templates_updated",
+                "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>",
+                "{templates}", String.join(", ", templates));
+    }
+
+    private void send(SetupContext<Player, CommandSender, Location> context, String path, String fallback,
+                      String... replacements) {
+        String message = module.getModuleConfig().getStringFrom("language.yml", path);
+        if (message == null || message.isBlank()) {
+            message = fallback;
+        }
+        for (int i = 0; i + 1 < replacements.length; i += 2) {
+            message = message.replace(replacements[i], replacements[i + 1]);
+        }
+        String prefix = module.getCoreConfig().getLanguage("prefix");
+        message = message.replace("{prefix}", prefix == null ? "" : prefix);
+        context.getMessagesAPI().sendRaw(context.getPlayer(), message);
     }
 
     private boolean handleFloor(SetupContext<Player, CommandSender, Location> context) {
