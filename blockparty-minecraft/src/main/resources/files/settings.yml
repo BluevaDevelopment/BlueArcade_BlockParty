@@ -1,7 +1,7 @@
 # Block Party Module Settings
 # Songs from: https://github.com/nickg2/NBSsongs 
 
-file_version: 3
+file_version: 4
 # Visual representation in menus
 menus:
   vote:
@@ -35,6 +35,23 @@ gameplay:
     horizontal_randomness: 0.08
   # Game mode players will be put in when game starts
   game_mode: SURVIVAL
+
+# Runtime-generated floor patterns. Enable this per arena with:
+# /baa game <id> block_party pattern type procedural
+procedural_patterns:
+  # Avoid selecting one of the most recently used template types.
+  no_repeat: 3
+  # Minimum number of pattern cells that should fit on the shortest side of the floor.
+  # Higher values produce smaller cells; lower values produce larger cells.
+  scale:
+    min_cells_per_side: 3
+  # A target color must cover at least this percentage of the floor area when possible.
+  min_target_area_percent: 25
+  difficulty:
+    # More colors are introduced as rounds progress.
+    initial_colors: 4
+    max_colors: 16
+    color_increase_every: 2
 
 particles:
   region:

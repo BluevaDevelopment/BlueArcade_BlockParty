@@ -3,6 +3,8 @@ package net.blueva.arcade.modules.blockparty.state;
 import net.blueva.arcade.api.world.BlockPattern;
 import com.hypixel.hytale.math.vector.Location;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,14 +28,23 @@ public class BlockPartyState {
     private boolean musicPaused;
     private boolean ended = false;
 
+    private final boolean proceduralPatterns;
+    private final List<String> proceduralTemplates;
+    private final long matchSeed;
+    private final Deque<String> recentProceduralTemplates = new ArrayDeque<>();
+
     public BlockPartyState(int arenaId, FloorBounds floor, Map<String, BlockPattern<Location, String>> patterns, List<String> order,
-                           String initialPatternKey, double searchSeconds) {
+                           String initialPatternKey, double searchSeconds, boolean proceduralPatterns,
+                           List<String> proceduralTemplates, long matchSeed) {
         this.arenaId = arenaId;
         this.floor = floor;
         this.patterns = patterns;
         this.order = order;
         this.initialPatternKey = initialPatternKey;
         this.searchSeconds = searchSeconds;
+        this.proceduralPatterns = proceduralPatterns;
+        this.proceduralTemplates = List.copyOf(proceduralTemplates);
+        this.matchSeed = matchSeed;
     }
 
     public int getArenaId() {
@@ -150,5 +161,21 @@ public class BlockPartyState {
 
     public void setEnded(boolean ended) {
         this.ended = ended;
+    }
+
+    public boolean usesProceduralPatterns() {
+        return proceduralPatterns;
+    }
+
+    public List<String> getProceduralTemplates() {
+        return proceduralTemplates;
+    }
+
+    public long getMatchSeed() {
+        return matchSeed;
+    }
+
+    public Deque<String> getRecentProceduralTemplates() {
+        return recentProceduralTemplates;
     }
 }

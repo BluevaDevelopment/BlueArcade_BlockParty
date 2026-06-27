@@ -24,6 +24,13 @@ public class BlockPartySettings {
     private boolean respectMaxGameTime = false;
     private String gameMode = "Adventure";
 
+    private int proceduralNoRepeat = 3;
+    private int proceduralMinCellsPerSide = 3;
+    private int proceduralInitialColors = 4;
+    private int proceduralMaxColors = 16;
+    private int proceduralColorIncreaseEvery = 2;
+    private int proceduralMinTargetAreaPercent = 25;
+
     private boolean fallingBlocksEnabled = true;
     private double fallingDownwardVelocity = 0.3;
     private double fallingHorizontalRandomness = 0.08;
@@ -68,6 +75,18 @@ public class BlockPartySettings {
         targetItemSlot = moduleConfig.getInt("gameplay.target_item_slot", 4);
         respectMaxGameTime = moduleConfig.getBoolean("gameplay.respect_max_game_time", false);
         gameMode = moduleConfig.getString("gameplay.game_mode", "Adventure");
+
+        proceduralNoRepeat = Math.max(0, moduleConfig.getInt("procedural_patterns.no_repeat", 3));
+        proceduralMinCellsPerSide = Math.max(2,
+                moduleConfig.getInt("procedural_patterns.scale.min_cells_per_side", 3));
+        proceduralInitialColors = Math.max(2,
+                moduleConfig.getInt("procedural_patterns.difficulty.initial_colors", 4));
+        proceduralMaxColors = Math.max(proceduralInitialColors,
+                moduleConfig.getInt("procedural_patterns.difficulty.max_colors", 16));
+        proceduralColorIncreaseEvery = Math.max(1,
+                moduleConfig.getInt("procedural_patterns.difficulty.color_increase_every", 2));
+        proceduralMinTargetAreaPercent = Math.max(1,
+                moduleConfig.getInt("procedural_patterns.min_target_area_percent", 25));
 
         fallingBlocksEnabled = moduleConfig.getBoolean("gameplay.falling_blocks.enabled", true);
         fallingDownwardVelocity = moduleConfig.getDouble("gameplay.falling_blocks.downward_velocity", 0.3);
@@ -165,6 +184,27 @@ public class BlockPartySettings {
 
     public String getGameMode() {
         return gameMode;
+    }
+
+    public List<String> getProceduralTemplates() {
+        return ProceduralPatternGenerator.TEMPLATE_TYPES;
+    }
+
+    public int getProceduralNoRepeat() {
+        return proceduralNoRepeat;
+    }
+
+    public int getProceduralCellSize(int minSide) {
+        return Math.max(1, minSide / Math.max(1, proceduralMinCellsPerSide));
+    }
+
+    public int getProceduralColorCount(int round) {
+        int increases = Math.max(0, round - 1) / proceduralColorIncreaseEvery;
+        return Math.min(proceduralMaxColors, proceduralInitialColors + increases);
+    }
+
+    public int getProceduralMinTargetBlocks(int area) {
+        return Math.max(1, area * proceduralMinTargetAreaPercent / 100);
     }
 
     public boolean isFallingBlocksEnabled() {

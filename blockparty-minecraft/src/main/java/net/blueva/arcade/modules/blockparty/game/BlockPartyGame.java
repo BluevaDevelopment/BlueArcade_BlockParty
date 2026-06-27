@@ -26,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -318,7 +319,15 @@ public class BlockPartyGame {
 
     private BlockPartyState createState(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
                                         FloorBounds floor) {
-        Map<String, net.blueva.arcade.api.world.BlockPattern> patterns = patternService.loadPatterns(context, floor);
+        String patternType = context.getDataAccess().getGameData("game.pattern.type", String.class);
+        // Fallback for arenas created before the pattern type was required.
+        if (patternType == null || patternType.isBlank()) {
+            patternType = "static";
+        }
+        boolean procedural = "procedural".equalsIgnoreCase(patternType);
+        Map<String, net.blueva.arcade.api.world.BlockPattern> patterns = procedural
+                ? new HashMap<>()
+                : patternService.loadPatterns(context, floor);
         List<String> order = new ArrayList<>(patterns.keySet());
         String initialPatternKey = context.getDataAccess().getGameData("game.patterns.initial", String.class);
         if (initialPatternKey == null || !patterns.containsKey(initialPatternKey)) {
@@ -345,7 +354,26 @@ public class BlockPartyGame {
             module.getSettings().setMinSearchTime(configuredMin);
         }
 
-        return new BlockPartyState(context.getArenaId(), floor, patterns, order, initialPatternKey, startingSearchTime);
+        List<String> proceduralTemplates = readProceduralTemplates(context);
+        long matchSeed = ThreadLocalRandom.current().nextLong();
+        return new BlockPartyState(context.getArenaId(), floor, patterns, order, initialPatternKey, startingSearchTime,
+                procedural, proceduralTemplates, matchSeed);
+    }
+
+    private List<String> readProceduralTemplates(
+            GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
+        String configured = context.getDataAccess().getGameData("game.pattern.templates", String.class);
+        if (configured == null || configured.isBlank()) {
+            return module.getSettings().getProceduralTemplates();
+        }
+        List<String> templates = new ArrayList<>();
+        for (String value : configured.split(",")) {
+            String template = value.trim().toLowerCase(Locale.ROOT);
+            if (!template.isEmpty()) {
+                templates.add(template);
+            }
+        }
+        return templates.isEmpty() ? module.getSettings().getProceduralTemplates() : templates;
     }
 
     private void sendDescription(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
@@ -404,8 +432,18 @@ public class BlockPartyGame {
         powerupService.clearArenaPowerups(context);
 
         state.setRound(state.getRound() + 1);
-        String patternKey = patternService.selectPatternKey(state, firstRound);
-        net.blueva.arcade.api.world.BlockPattern pattern = state.getPatterns().get(patternKey);
+        net.blueva.arcade.api.world.BlockPattern pattern = null;
+        if (state.usesProceduralPatterns()) {
+            try {
+                pattern = patternService.createProceduralPattern(context, state);
+            } catch (RuntimeException exception) {
+                Bukkit.getLogger().warning("[BlockParty] Failed to generate a procedural pattern for arena "
+                        + state.getArenaId() + ": " + exception.getMessage());
+            }
+        } else {
+            String patternKey = patternService.selectPatternKey(state, firstRound);
+            pattern = state.getPatterns().get(patternKey);
+        }
         if (pattern == null && !state.getPatterns().isEmpty()) {
             pattern = state.getPatterns().values().iterator().next();
         }

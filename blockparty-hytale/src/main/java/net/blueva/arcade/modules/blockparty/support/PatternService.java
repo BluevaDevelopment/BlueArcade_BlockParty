@@ -107,7 +107,9 @@ public class PatternService {
     }
 
     public String selectTargetMaterial(BlockPattern<Location, String> pattern) {
-        List<String> materials = pattern.getMaterials();
+        List<String> materials = pattern instanceof ProceduralBlockPattern procedural
+                ? procedural.getTargetMaterials()
+                : pattern.getMaterials();
         List<String> valid = new ArrayList<>();
         for (String material : materials) {
             if (!BlockPartyUtils.isAir(material)) {
@@ -120,6 +122,58 @@ public class PatternService {
                     : module.getSettings().getFallbackMaterials().get(0);
         }
         return valid.get(ThreadLocalRandom.current().nextInt(valid.size()));
+    }
+
+    public BlockPattern<Location, String> createProceduralPattern(
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
+            BlockPartyState state) {
+        List<String> candidates = new ArrayList<>(state.getProceduralTemplates());
+        candidates.removeIf(template -> !ProceduralPatternGenerator.TEMPLATE_TYPES.contains(template));
+        if (candidates.isEmpty()) {
+            candidates.addAll(ProceduralPatternGenerator.TEMPLATE_TYPES);
+        }
+
+        List<String> fresh = new ArrayList<>(candidates);
+        fresh.removeAll(state.getRecentProceduralTemplates());
+        if (!fresh.isEmpty()) {
+            candidates = fresh;
+        }
+
+        long roundSeed = mixSeed(state.getMatchSeed(), state.getRound());
+        String template = candidates.get(new java.util.Random(roundSeed).nextInt(candidates.size()));
+        rememberTemplate(state, template);
+
+        FloorBounds floor = state.getFloor();
+        Vector3d minPos = floor.min().getPosition();
+        Vector3d maxPos = floor.max().getPosition();
+        int width = (int) Math.floor(Math.abs(maxPos.x - minPos.x)) + 1;
+        int depth = (int) Math.floor(Math.abs(maxPos.z - minPos.z)) + 1;
+        int area = width * depth;
+        int minSide = Math.min(width, depth);
+        int size = module.getSettings().getProceduralCellSize(minSide);
+        int colors = module.getSettings().getProceduralColorCount(state.getRound());
+
+        ProceduralPatternGenerator generator = new ProceduralPatternGenerator(context.getBlocksAPI());
+        return generator.generate(floor, floor.min().getWorld(), template, roundSeed, size, colors,
+                module.getSettings().getProceduralMinTargetBlocks(area));
+    }
+
+    private void rememberTemplate(BlockPartyState state, String template) {
+        int limit = module.getSettings().getProceduralNoRepeat();
+        if (limit <= 0) {
+            return;
+        }
+        state.getRecentProceduralTemplates().addLast(template);
+        while (state.getRecentProceduralTemplates().size() > limit) {
+            state.getRecentProceduralTemplates().removeFirst();
+        }
+    }
+
+    private long mixSeed(long seed, int round) {
+        long mixed = seed + 0x9E3779B97F4A7C15L * round;
+        mixed = (mixed ^ (mixed >>> 30)) * 0xBF58476D1CE4E5B9L;
+        mixed = (mixed ^ (mixed >>> 27)) * 0x94D049BB133111EBL;
+        return mixed ^ (mixed >>> 31);
     }
 
     private List<String> parseIndex(String index) {
