@@ -22,6 +22,7 @@ public class BlockPartySettings {
     private boolean giveTargetItem = true;
     private int targetItemSlot = 4;
     private boolean respectMaxGameTime = false;
+    private String gameMode = "Adventure";
 
     private boolean fallingBlocksEnabled = true;
     private double fallingDownwardVelocity = 0.3;
@@ -66,6 +67,7 @@ public class BlockPartySettings {
         giveTargetItem = moduleConfig.getBoolean("gameplay.give_target_item", true);
         targetItemSlot = moduleConfig.getInt("gameplay.target_item_slot", 4);
         respectMaxGameTime = moduleConfig.getBoolean("gameplay.respect_max_game_time", false);
+        gameMode = moduleConfig.getString("gameplay.game_mode", "Adventure");
 
         fallingBlocksEnabled = moduleConfig.getBoolean("gameplay.falling_blocks.enabled", true);
         fallingDownwardVelocity = moduleConfig.getDouble("gameplay.falling_blocks.downward_velocity", 0.3);
@@ -159,6 +161,10 @@ public class BlockPartySettings {
 
     public boolean isRespectMaxGameTime() {
         return respectMaxGameTime;
+    }
+
+    public String getGameMode() {
+        return gameMode;
     }
 
     public boolean isFallingBlocksEnabled() {
