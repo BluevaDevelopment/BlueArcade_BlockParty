@@ -37,7 +37,6 @@ public class BlockPartySetup implements GameSetupHandler {
         return switch (subcommand) {
             case "floor" -> handleFloor(context);
             case "pattern" -> handlePattern(context);
-            case "procedural" -> handleProcedural(context);
             case "musictime" -> handleTime(context, "basic.initial_music_time",
                     module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_music_time"));
             case "searchtime" -> handleTime(context, "basic.search_time",
@@ -65,19 +64,16 @@ public class BlockPartySetup implements GameSetupHandler {
 
         if ("pattern".equals(sub)) {
             if (relIndex == 0) {
-                return TabCompleteResult.of("add", "remove", "list", "initial");
+                return TabCompleteResult.of("add", "remove", "list", "initial", "type", "status", "templates");
             }
-            if (relIndex == 1 && ("remove".equals(context.getArg(context.getStartIndex())) ||
-                    "initial".equals(context.getArg(context.getStartIndex())))) {
+            String patternAction = context.getArg(context.getStartIndex());
+            if (relIndex == 1 && ("remove".equals(patternAction) || "initial".equals(patternAction))) {
                 return TabCompleteResult.of();
             }
-        }
-
-        if ("procedural".equals(sub)) {
-            if (relIndex == 0) {
-                return TabCompleteResult.of("on", "off", "status", "templates");
+            if (relIndex == 1 && "type".equals(patternAction)) {
+                return TabCompleteResult.of("static", "procedural");
             }
-            if (relIndex >= 1 && "templates".equalsIgnoreCase(context.getArg(context.getStartIndex()))) {
+            if (relIndex >= 1 && "templates".equalsIgnoreCase(patternAction)) {
                 List<String> values = new ArrayList<>();
                 values.add("all");
                 values.addAll(ProceduralPatternGenerator.TEMPLATE_TYPES);
@@ -104,7 +100,7 @@ public class BlockPartySetup implements GameSetupHandler {
 
     @Override
     public List<String> getSubcommands() {
-        return Arrays.asList("floor", "pattern", "procedural", "musictime", "searchtime", "decreasetime", "mintime");
+        return Arrays.asList("floor", "pattern", "musictime", "searchtime", "decreasetime", "mintime");
     }
 
     @Override
@@ -116,61 +112,67 @@ public class BlockPartySetup implements GameSetupHandler {
         SetupDataAPI data = context.getData();
 
         boolean hasFloor = data.has("game.floor.bounds.min.x") && data.has("game.floor.bounds.max.x");
+        String patternType = data.getString("game.pattern.type");
+        boolean hasPatternType = patternType != null && !patternType.isBlank();
+        boolean isProcedural = "procedural".equalsIgnoreCase(patternType);
         boolean hasPatterns = !parseIndex(data.getString("game.patterns.index")).isEmpty();
-        boolean procedural = data.getBoolean("game.procedural.enabled", false);
 
-        if (!hasFloor || (!hasPatterns && !procedural)) {
+        if (!hasFloor || !hasPatternType || (!isProcedural && !hasPatterns)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
                     module.getModuleConfig().getStringFrom("language.yml", "setup_messages.not_configured")
                             .replace("{arena_id}", String.valueOf(context.getArenaId())));
         }
 
-        return hasFloor && (hasPatterns || procedural);
+        return hasFloor && hasPatternType && (isProcedural || hasPatterns);
     }
 
-    private boolean handleProcedural(SetupContext<Player, CommandSender, Location> context) {
-        if (!context.hasHandlerArgs(1)) {
-            send(context, "setup_messages.usage_procedural",
-                    "{prefix} <yellow>Usage: /baa game <id> block_party procedural <on|off|status|templates></yellow>");
+    private boolean handlePatternType(SetupContext<Player, CommandSender, Location> context) {
+        if (!context.hasHandlerArgs(2)) {
+            send(context, "setup_messages.usage_pattern_type",
+                    "{prefix} <yellow>Usage: /baa game <id> block_party pattern type <static|procedural></yellow>");
             return true;
         }
 
-        String action = context.getHandlerArg(0).toLowerCase(Locale.ENGLISH);
+        String type = context.getHandlerArg(1).toLowerCase(Locale.ENGLISH);
         SetupDataAPI data = context.getData();
-        switch (action) {
-            case "on" -> {
-                data.setBoolean("game.procedural.enabled", true);
-                data.save();
-                send(context, "setup_messages.procedural_enabled",
-                        "{prefix} <green>Procedural patterns enabled.</green>");
-            }
-            case "off" -> {
-                data.setBoolean("game.procedural.enabled", false);
-                data.save();
-                send(context, "setup_messages.procedural_disabled",
-                        "{prefix} <yellow>Procedural patterns disabled. Saved patterns will be used.</yellow>");
-            }
-            case "status" -> {
-                boolean enabled = data.getBoolean("game.procedural.enabled", false);
-                String templates = data.getString("game.procedural.templates");
-                if (templates == null || templates.isBlank()) {
-                    templates = "all";
-                }
-                send(context, "setup_messages.procedural_status",
-                        "{prefix} <gray>Procedural: <yellow>{enabled}</yellow>, templates: <yellow>{templates}</yellow></gray>",
-                        "{enabled}", enabled ? "on" : "off", "{templates}", templates);
-            }
-            case "templates" -> handleProceduralTemplates(context, data);
-            default -> send(context, "setup_messages.usage_procedural",
-                    "{prefix} <yellow>Usage: /baa game <id> block_party procedural <on|off|status|templates></yellow>");
+        if (!"static".equals(type) && !"procedural".equals(type)) {
+            send(context, "setup_messages.usage_pattern_type",
+                    "{prefix} <yellow>Usage: /baa game <id> block_party pattern type <static|procedural></yellow>");
+            return true;
+        }
+
+        data.setString("game.pattern.type", type);
+        data.save();
+        if ("procedural".equals(type)) {
+            send(context, "setup_messages.pattern_type_set_procedural",
+                    "{prefix} <green>Pattern type set to <yellow>procedural</yellow>. A new pattern will be generated each round; saved patterns will be ignored.</green>");
+        } else {
+            send(context, "setup_messages.pattern_type_set_static",
+                    "{prefix} <green>Pattern type set to <yellow>static</yellow>. Saved patterns will be used.</green>");
         }
         return true;
     }
 
-    private void handleProceduralTemplates(SetupContext<Player, CommandSender, Location> context, SetupDataAPI data) {
+    private boolean handlePatternStatus(SetupContext<Player, CommandSender, Location> context) {
+        SetupDataAPI data = context.getData();
+        String type = data.getString("game.pattern.type");
+        if (type == null || type.isBlank()) {
+            type = "not set";
+        }
+        String templates = data.getString("game.pattern.templates");
+        if (templates == null || templates.isBlank()) {
+            templates = "all";
+        }
+        send(context, "setup_messages.pattern_type_status",
+                "{prefix} <gray>Pattern type: <yellow>{type}</yellow>, templates: <yellow>{templates}</yellow></gray>",
+                "{type}", type, "{templates}", templates);
+        return true;
+    }
+
+    private void handlePatternTemplates(SetupContext<Player, CommandSender, Location> context, SetupDataAPI data) {
         if (!context.hasHandlerArgs(2)) {
-            send(context, "setup_messages.usage_procedural_templates",
-                    "{prefix} <yellow>Usage: /baa game <id> block_party procedural templates <all|type...></yellow>");
+            send(context, "setup_messages.usage_pattern_templates",
+                    "{prefix} <yellow>Usage: /baa game <id> block_party pattern templates <all|type...></yellow>");
             return;
         }
 
@@ -198,21 +200,21 @@ public class BlockPartySetup implements GameSetupHandler {
         }
 
         if (useAllTemplates) {
-            data.remove("game.procedural.templates");
+            data.remove("game.pattern.templates");
             data.save();
-            send(context, "setup_messages.procedural_templates_updated",
+            send(context, "setup_messages.pattern_templates_updated",
                     "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>",
                     "{templates}", "all");
             return;
         }
         if (templates.isEmpty()) {
-            send(context, "setup_messages.procedural_templates_invalid",
+            send(context, "setup_messages.pattern_templates_invalid",
                     "{prefix} <red>No valid procedural templates were provided.</red>");
             return;
         }
-        data.setString("game.procedural.templates", String.join(",", templates));
+        data.setString("game.pattern.templates", String.join(",", templates));
         data.save();
-        send(context, "setup_messages.procedural_templates_updated",
+        send(context, "setup_messages.pattern_templates_updated",
                 "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>",
                 "{templates}", String.join(", ", templates));
     }
@@ -284,7 +286,7 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handlePattern(SetupContext<Player, CommandSender, Location> context) {
         if (!context.hasHandlerArgs(1)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern_add"));
+                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern"));
             return true;
         }
 
@@ -294,9 +296,15 @@ public class BlockPartySetup implements GameSetupHandler {
             case "remove" -> handlePatternRemove(context);
             case "list" -> handlePatternList(context);
             case "initial" -> handlePatternInitial(context);
+            case "type" -> handlePatternType(context);
+            case "status" -> handlePatternStatus(context);
+            case "templates" -> {
+                handlePatternTemplates(context, context.getData());
+                yield true;
+            }
             default -> {
                 context.getMessagesAPI().sendRaw(context.getPlayer(),
-                        module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern_add"));
+                        module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern"));
                 yield true;
             }
         };

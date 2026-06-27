@@ -319,8 +319,8 @@ public class BlockPartyGame {
 
     private BlockPartyState createState(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
                                         FloorBounds floor) {
-        Boolean configuredProcedural = context.getDataAccess().getGameData("game.procedural.enabled", Boolean.class);
-        boolean procedural = Boolean.TRUE.equals(configuredProcedural);
+        String patternType = context.getDataAccess().getGameData("game.pattern.type", String.class);
+        boolean procedural = "procedural".equalsIgnoreCase(patternType);
         Map<String, net.blueva.arcade.api.world.BlockPattern> patterns = procedural
                 ? new HashMap<>()
                 : patternService.loadPatterns(context, floor);
@@ -358,7 +358,7 @@ public class BlockPartyGame {
 
     private List<String> readProceduralTemplates(
             GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
-        String configured = context.getDataAccess().getGameData("game.procedural.templates", String.class);
+        String configured = context.getDataAccess().getGameData("game.pattern.templates", String.class);
         if (configured == null || configured.isBlank()) {
             return module.getSettings().getProceduralTemplates();
         }
