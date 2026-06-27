@@ -15,7 +15,11 @@ import net.blueva.arcade.modules.blockparty.support.PlayerEffectsService;
 import net.blueva.arcade.modules.blockparty.support.PowerupService;
 import net.blueva.arcade.api.world.BlockPattern;
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.math.vector.Rotation3f;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -25,6 +29,7 @@ import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.component.Holder;
 
 import java.util.ArrayList;
@@ -152,6 +157,7 @@ public class BlockPartyGame {
             if (player == null) {
                 continue;
             }
+            applyGameMode(player);
             playerEffectsService.giveStartingItems(player);
             playerEffectsService.applyStartingEffects(player);
             context.getScoreboardAPI().showScoreboard(player, getScoreboardPath());
@@ -819,5 +825,34 @@ public class BlockPartyGame {
             return null;
         }
         return arenaStates.get(context.getArenaId());
+    }
+
+    private void applyGameMode(Player player) {
+        if (player == null || player.getWorld() == null) {
+            return;
+        }
+
+        String configuredMode = module.getSettings().getGameMode();
+        GameMode targetMode;
+        try {
+            targetMode = GameMode.valueOf(configuredMode.trim());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            targetMode = GameMode.Adventure;
+        }
+
+        final GameMode finalTargetMode = targetMode;
+        player.getWorld().execute(() -> {
+            Ref<EntityStore> ref = player.getReference();
+            if (ref == null || !ref.isValid()) {
+                return;
+            }
+
+            Store<EntityStore> store = ref.getStore();
+            if (store == null) {
+                return;
+            }
+
+            Player.setGameMode(ref, finalTargetMode, store);
+        });
     }
 }
