@@ -40,32 +40,47 @@ Use these steps to register the arena and attach the module:
 
 ### Module-specific steps
 Finish the setup with the commands below:
+
+#### 1. Configure the floor
 - `/baa game [arena_id] block_party floor set` — Select and save the floor area.
+
+#### 2. Choose the pattern mode (required)
+Every arena must choose how the floor pattern is generated:
+
+- `/baa game [arena_id] block_party pattern type static` — Use manually saved patterns.
+- `/baa game [arena_id] block_party pattern type procedural` — Generate a fresh pattern automatically for each round.
+
+Check the current mode at any time with `/baa game [arena_id] block_party pattern status`.
+
+##### Saved patterns (static)
+Create one or more patterns manually. At least one saved pattern is required in this mode.
+
 - `/baa game [arena_id] block_party pattern add <name>` — Create a new color pattern.
 - `/baa game [arena_id] block_party pattern remove <name>` — Remove a pattern.
 - `/baa game [arena_id] block_party pattern list` — List existing patterns.
-- `/baa game [arena_id] block_party pattern initial <name>` — Set the initial pattern.
-- `/baa game [arena_id] block_party musictime <seconds>` — Set the music phase length (optional).
-- `/baa game [arena_id] block_party searchtime <seconds>` — Set the time to find the color (optional).
-- `/baa game [arena_id] block_party decreasetime <seconds>` — Decrease the search time per round (optional).
-- `/baa game [arena_id] block_party mintime <seconds>` — Set the minimum search time (optional).
+- `/baa game [arena_id] block_party pattern initial <name>` — Set the first pattern.
 
-### Procedural patterns (Minecraft)
-The Minecraft edition can generate a fresh floor pattern for every round. Existing arenas remain in static mode
-until procedural patterns are explicitly enabled.
+##### Procedural patterns (dynamic)
+Let the module generate a fresh pattern automatically for each round. Saved patterns are optional in this mode and remain untouched.
 
-- `/baa game [arena_id] block_party procedural on` — Enable runtime-generated patterns.
-- `/baa game [arena_id] block_party procedural off` — Return to saved patterns.
-- `/baa game [arena_id] block_party procedural status` — Show the arena's current mode and template list.
-- `/baa game [arena_id] block_party procedural templates all` — Enable every built-in template.
-- `/baa game [arena_id] block_party procedural templates <type...>` — Restrict generation to selected templates.
+- `/baa game [arena_id] block_party pattern templates all` — Use every built-in template.
+- `/baa game [arena_id] block_party pattern templates <type...>` — Use only specific templates.
 
-Available templates: `stripes`, `diagonal`, `rainbow`, `checker`, `rings`, `sectors`, `islands`, `waves`,
-`spiral`, `creeper`, and `mosaic`.
+Available templates: `stripes`, `diagonal`, `rainbow`, `checker`, `rings`, `sectors`, `islands`, `waves`, `spiral`, `creeper`, `mosaic`.
 
-Pattern size and color count scale with the round number. Their defaults are configured under
-`procedural_patterns` in the module's `settings.yml`. Procedural arenas only require floor bounds; saved patterns
-remain optional and are not modified or removed.
+Procedural settings are configured under `procedural_patterns` in the module `settings.yml`:
+
+- `scale.min_cells_per_side` — How many pattern cells should fit on the shortest floor side. Higher values produce smaller cells.
+- `min_target_area_percent` — Minimum percentage of the floor that a target color must cover.
+- `difficulty.*` — Color count scaling per round.
+
+By default, every procedural arena uses all built-in templates. Use `pattern templates <type...>` to restrict which templates an arena can use.
+
+#### 3. Configure timing (optional)
+- `/baa game [arena_id] block_party musictime <seconds>` — Set the music phase length.
+- `/baa game [arena_id] block_party searchtime <seconds>` — Set the time to find the color.
+- `/baa game [arena_id] block_party decreasetime <seconds>` — Decrease the search time per round.
+- `/baa game [arena_id] block_party mintime <seconds>` — Set the minimum search time.
 
 ## Technical details
 - **Minigame ID:** `block_party`
