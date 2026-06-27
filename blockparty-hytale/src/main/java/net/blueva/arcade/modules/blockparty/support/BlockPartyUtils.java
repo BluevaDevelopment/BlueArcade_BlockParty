@@ -1,7 +1,7 @@
 package net.blueva.arcade.modules.blockparty.support;
 
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 
 import java.util.HashMap;
 import java.util.Locale;
