@@ -171,10 +171,16 @@ public class PatternService {
         rememberTemplate(state, template);
 
         World world = resolvePatternWorld(context, state.getFloor());
-        int size = module.getSettings().getProceduralSize(state.getRound());
+        FloorBounds floor = state.getFloor();
+        int minSide = Math.min(
+                Math.abs(floor.max().getBlockX() - floor.min().getBlockX()) + 1,
+                Math.abs(floor.max().getBlockZ() - floor.min().getBlockZ()) + 1);
+        int area = (Math.abs(floor.max().getBlockX() - floor.min().getBlockX()) + 1)
+                * (Math.abs(floor.max().getBlockZ() - floor.min().getBlockZ()) + 1);
+        int size = module.getSettings().getProceduralCellSize(minSide);
         int colors = module.getSettings().getProceduralColorCount(state.getRound());
         return proceduralGenerator.generate(state.getFloor(), world, template, roundSeed, size, colors,
-                module.getSettings().getProceduralMinTargetBlocks());
+                module.getSettings().getProceduralMinTargetBlocks(area));
     }
 
     private void rememberTemplate(BlockPartyState state, String template) {
