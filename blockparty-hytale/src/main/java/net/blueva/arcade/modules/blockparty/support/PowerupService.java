@@ -9,9 +9,13 @@ import net.blueva.arcade.modules.blockparty.state.PowerupInstance;
 import net.blueva.arcade.modules.blockparty.state.PowerupType;
 import net.blueva.arcade.modules.blockparty.state.RoundPhase;
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.entity.Entity;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -120,7 +124,7 @@ public class PowerupService {
         }
 
         String message = module.getModuleConfig().getStringFrom("language.yml", "messages.powerups.collected")
-                .replace("{player}", player.getDisplayName())
+                .replace("{player}", player.getPlayerRef().getUsername())
                 .replace("{powerup}", instance.getType().getPlainName());
 
         for (Player arenaPlayer : context.getPlayers()) {
@@ -276,12 +280,18 @@ public class PowerupService {
     }
 
     private Location resolvePlayerLocation(Player player) {
-        if (player == null || player.getWorld() == null || player.getTransformComponent() == null) {
+        if (player == null || player.getWorld() == null || player.getReference() == null) {
             return null;
         }
-        Vector3d position = player.getTransformComponent().getPosition();
-        Vector3f rotation = player.getTransformComponent().getRotation();
-        return new Location(player.getWorld().getName(), position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
+        Ref<EntityStore> ref = player.getReference();
+        Store<EntityStore> store = ref.getStore();
+        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+        if (transform == null) {
+            return null;
+        }
+        Vector3d position = transform.getPosition();
+        Rotation3f rotation = transform.getRotation();
+        return new Location(player.getWorld().getName(), position.x, position.y, position.z, rotation.pitch(), rotation.yaw(), rotation.roll());
     }
 
     private void teleportPlayer(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
@@ -292,10 +302,16 @@ public class PowerupService {
         }
         context.getSchedulerAPI().runAtEntity(player, () -> {
             Vector3d position = location.getPosition();
-            Vector3f rotation = location.getRotation();
-            player.getTransformComponent().teleportPosition(position);
+            Rotation3f rotation = location.getRotation();
+            Ref<EntityStore> ref = player.getReference();
+            Store<EntityStore> store = ref.getStore();
+            TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+            if (transform == null) {
+                return;
+            }
+            transform.setPosition(position);
             if (rotation != null) {
-                player.getTransformComponent().teleportRotation(rotation);
+                transform.setRotation(rotation);
             }
         });
     }

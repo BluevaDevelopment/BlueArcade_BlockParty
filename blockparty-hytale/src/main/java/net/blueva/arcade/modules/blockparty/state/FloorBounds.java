@@ -1,7 +1,7 @@
 package net.blueva.arcade.modules.blockparty.state;
 
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 
 public record FloorBounds(Location min, Location max) {
     public boolean contains(Location loc) {

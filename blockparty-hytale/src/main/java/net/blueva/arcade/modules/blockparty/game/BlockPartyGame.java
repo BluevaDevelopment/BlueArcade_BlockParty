@@ -15,9 +15,13 @@ import net.blueva.arcade.modules.blockparty.support.PlayerEffectsService;
 import net.blueva.arcade.modules.blockparty.support.PowerupService;
 import net.blueva.arcade.api.world.BlockPattern;
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.entity.Entity;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -640,12 +644,18 @@ public class BlockPartyGame {
     }
 
     private Location resolvePlayerLocation(Player player) {
-        if (player == null || player.getWorld() == null || player.getTransformComponent() == null) {
+        if (player == null || player.getWorld() == null || player.getReference() == null) {
             return null;
         }
-        Vector3d position = player.getTransformComponent().getPosition();
-        Vector3f rotation = player.getTransformComponent().getRotation();
-        return new Location(player.getWorld().getName(), position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
+        Ref<EntityStore> ref = player.getReference();
+        Store<EntityStore> store = ref.getStore();
+        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+        if (transform == null) {
+            return null;
+        }
+        Vector3d position = transform.getPosition();
+        Rotation3f rotation = transform.getRotation();
+        return new Location(player.getWorld().getName(), position.x, position.y, position.z, rotation.pitch(), rotation.yaw(), rotation.roll());
     }
 
     private void broadcastDeathMessage(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
@@ -660,7 +670,7 @@ public class BlockPartyGame {
             return;
         }
 
-        message = message.replace("{victim}", victim.getDisplayName());
+        message = message.replace("{victim}", victim.getPlayerRef().getUsername());
 
         for (Player player : context.getPlayers()) {
             context.getMessagesAPI().sendRaw(player, message);

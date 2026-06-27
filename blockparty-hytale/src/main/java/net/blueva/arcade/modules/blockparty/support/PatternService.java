@@ -6,7 +6,7 @@ import net.blueva.arcade.modules.blockparty.BlockPartyModule;
 import net.blueva.arcade.modules.blockparty.state.BlockPartyState;
 import net.blueva.arcade.modules.blockparty.state.FloorBounds;
 import com.hypixel.hytale.math.vector.Location;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
