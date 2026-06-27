@@ -141,8 +141,12 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
 
     /**
      * Extracts bundled .midi music files from the module jar to the module's music folder.
-     * The list of files to extract is read from files/music/music_list.txt inside the jar.
-     * Files that already exist on disk are skipped.
+     * The list of files to extract is read from bundled_music/music_list.txt inside the jar.
+     * Files are copied only on the very first load and are never overwritten afterwards.
+     *
+     * This only runs on the very first load, before the module has generated its config files.
+     * Once settings.yml exists, we assume the server owner has set up the module and we leave
+     * the music folder alone so deleted songs do not re-appear on restart.
      */
     private void extractBundledMusic() {
         if (moduleConfig == null) {
@@ -152,13 +156,17 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
         if (moduleFolder == null) {
             return;
         }
+        // If the module has already been configured, do not re-extract bundled songs.
+        if (new File(moduleFolder, "settings.yml").exists()) {
+            return;
+        }
         File musicDir = new File(moduleFolder, "music");
         if (!musicDir.exists() && !musicDir.mkdirs()) {
             return;
         }
 
         ClassLoader cl = getClass().getClassLoader();
-        try (InputStream listStream = cl.getResourceAsStream("files/music/music_list.txt")) {
+        try (InputStream listStream = cl.getResourceAsStream("bundled_music/music_list.txt")) {
             if (listStream == null) {
                 return;
             }
@@ -174,7 +182,7 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
                     if (target.exists()) {
                         continue;
                     }
-                    try (InputStream in = cl.getResourceAsStream("files/music/" + filename)) {
+                    try (InputStream in = cl.getResourceAsStream("bundled_music/" + filename)) {
                         if (in != null) {
                             Files.copy(in, target.toPath());
                         }

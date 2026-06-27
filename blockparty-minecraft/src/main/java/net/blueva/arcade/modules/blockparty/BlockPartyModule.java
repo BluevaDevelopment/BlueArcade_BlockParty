@@ -29,6 +29,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.UUID;
 
@@ -60,6 +66,8 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Mat
         moduleConfig.register("language.yml", 1);
         moduleConfig.register("settings.yml", 1);
         moduleConfig.register("achievements.yml", 1);
+
+        extractBundledMusic();
 
         settings = new BlockPartySettings();
         settings.load(moduleConfig, moduleInfo.getId());
@@ -160,6 +168,59 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Mat
 
     public BlockPartyGame getGame() {
         return game;
+    }
+
+    /**
+     * Extracts bundled .nbs music files from the module jar to the module's music folder.
+     * The list of files to extract is read from bundled_music/music_list.txt inside the jar.
+     * Files are copied only on the very first load and are never overwritten afterwards.
+     */
+    private void extractBundledMusic() {
+        if (moduleConfig == null) {
+            return;
+        }
+        File moduleFolder = moduleConfig.getDataFolder();
+        if (moduleFolder == null) {
+            return;
+        }
+        // If the module has already been configured, do not re-extract bundled songs.
+        if (new File(moduleFolder, "settings.yml").exists()) {
+            return;
+        }
+        File musicDir = new File(moduleFolder, "music");
+        if (!musicDir.exists() && !musicDir.mkdirs()) {
+            return;
+        }
+
+        ClassLoader cl = getClass().getClassLoader();
+        try (InputStream listStream = cl.getResourceAsStream("bundled_music/music_list.txt")) {
+            if (listStream == null) {
+                return;
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(listStream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    String filename = line + ".nbs";
+                    File target = new File(musicDir, filename);
+                    if (target.exists()) {
+                        continue;
+                    }
+                    try (InputStream in = cl.getResourceAsStream("bundled_music/" + filename)) {
+                        if (in != null) {
+                            Files.copy(in, target.toPath());
+                        }
+                    } catch (Exception ignored) {
+                        // Skip files that cannot be extracted
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Silently skip if the music list cannot be read
+        }
     }
 
     public GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> getGameContext(Player player) {

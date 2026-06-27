@@ -82,6 +82,14 @@ By default, every procedural arena uses all built-in templates. Use `pattern tem
 - `/baa game [arena_id] block_party decreasetime <seconds>` — Decrease the search time per round.
 - `/baa game [arena_id] block_party mintime <seconds>` — Set the minimum search time.
 
+## Music
+Bundled songs are installed into the module's `music/` folder only on the very first server start. After that, the module never touches the folder again, so songs you delete will not reappear on restart.
+
+- **Minecraft edition:** `.nbs` files
+- **Hytale edition:** `.midi` files
+
+You can also add your own song files to the `music/` folder at any time; they will be picked up on the next reload. If the folder is empty, rounds run without music.
+
 ## Technical details
 - **Minigame ID:** `block_party`
 - **Module Type:** `MINIGAME`
