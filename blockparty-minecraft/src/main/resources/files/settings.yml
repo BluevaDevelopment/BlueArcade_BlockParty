@@ -33,7 +33,7 @@ gameplay:
     enabled: true
     downward_velocity: 0.3
     horizontal_randomness: 0.08
-  # Game mode players will be put in when event starts
+  # Game mode players will be put in when game starts
   game_mode: SURVIVAL
 
 particles:
