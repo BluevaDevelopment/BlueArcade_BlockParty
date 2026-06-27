@@ -112,10 +112,14 @@ public class BlockPartySetup implements GameSetupHandler {
         SetupDataAPI data = context.getData();
 
         boolean hasFloor = data.has("game.floor.bounds.min.x") && data.has("game.floor.bounds.max.x");
+        boolean hasPatterns = !parseIndex(data.getString("game.patterns.index")).isEmpty();
         String patternType = data.getString("game.pattern.type");
+        // Fallback for arenas created before the pattern type was required.
+        if ((patternType == null || patternType.isBlank()) && hasPatterns) {
+            patternType = "static";
+        }
         boolean hasPatternType = patternType != null && !patternType.isBlank();
         boolean isProcedural = "procedural".equalsIgnoreCase(patternType);
-        boolean hasPatterns = !parseIndex(data.getString("game.patterns.index")).isEmpty();
 
         if (!hasFloor || !hasPatternType || (!isProcedural && !hasPatterns)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),

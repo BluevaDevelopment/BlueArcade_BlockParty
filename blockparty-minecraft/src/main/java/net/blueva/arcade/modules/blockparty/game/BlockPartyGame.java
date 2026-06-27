@@ -320,6 +320,10 @@ public class BlockPartyGame {
     private BlockPartyState createState(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
                                         FloorBounds floor) {
         String patternType = context.getDataAccess().getGameData("game.pattern.type", String.class);
+        // Fallback for arenas created before the pattern type was required.
+        if (patternType == null || patternType.isBlank()) {
+            patternType = "static";
+        }
         boolean procedural = "procedural".equalsIgnoreCase(patternType);
         Map<String, net.blueva.arcade.api.world.BlockPattern> patterns = procedural
                 ? new HashMap<>()
