@@ -7,6 +7,7 @@ import net.blueva.arcade.api.setup.SetupSelectionAPI;
 import net.blueva.arcade.api.setup.TabCompleteContext;
 import net.blueva.arcade.api.setup.TabCompleteResult;
 import net.blueva.arcade.modules.blockparty.BlockPartyModule;
+import net.blueva.arcade.modules.blockparty.support.ProceduralPatternGenerator;
 import com.hypixel.hytale.math.vector.Location;
 import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
@@ -63,11 +64,20 @@ public class BlockPartySetup implements GameSetupHandler {
 
         if ("pattern".equals(sub)) {
             if (relIndex == 0) {
-                return TabCompleteResult.of("add", "remove", "list", "initial");
+                return TabCompleteResult.of("add", "remove", "list", "initial", "type", "status", "templates");
             }
-            if (relIndex == 1 && ("remove".equals(context.getArg(context.getStartIndex())) ||
-                    "initial".equals(context.getArg(context.getStartIndex())))) {
+            String patternAction = context.getArg(context.getStartIndex());
+            if (relIndex == 1 && ("remove".equals(patternAction) || "initial".equals(patternAction))) {
                 return TabCompleteResult.of();
+            }
+            if (relIndex == 1 && "type".equals(patternAction)) {
+                return TabCompleteResult.of("static", "procedural");
+            }
+            if (relIndex >= 1 && "templates".equalsIgnoreCase(patternAction)) {
+                List<String> values = new ArrayList<>();
+                values.add("all");
+                values.addAll(ProceduralPatternGenerator.TEMPLATE_TYPES);
+                return TabCompleteResult.of(values.toArray(String[]::new));
             }
         }
 
@@ -101,15 +111,21 @@ public class BlockPartySetup implements GameSetupHandler {
         SetupDataAPI data = context.getData();
 
         boolean hasFloor = data.has("game.floor.bounds.min.x") && data.has("game.floor.bounds.max.x");
-        boolean hasPatterns = data.getString("game.patterns.index") != null;
+        boolean hasPatterns = !parseIndex(data.getString("game.patterns.index")).isEmpty();
+        String patternType = data.getString("game.pattern.type");
+        if ((patternType == null || patternType.isBlank()) && hasPatterns) {
+            patternType = "static";
+        }
+        boolean hasPatternType = patternType != null && !patternType.isBlank();
+        boolean isProcedural = "procedural".equalsIgnoreCase(patternType);
 
-        if (!hasFloor || !hasPatterns) {
+        if (!hasFloor || !hasPatternType || (!isProcedural && !hasPatterns)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
                     module.getModuleConfig().getStringFrom("language.yml", "setup_messages.not_configured")
                             .replace("{arena_id}", String.valueOf(context.getArenaId())));
         }
 
-        return hasFloor && hasPatterns;
+        return hasFloor && hasPatternType && (isProcedural || hasPatterns);
     }
 
     private boolean handleFloor(SetupContext<Player, CommandSender, Location> context) {
@@ -167,7 +183,7 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handlePattern(SetupContext<Player, CommandSender, Location> context) {
         if (!context.hasHandlerArgs(1)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern_add"));
+                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern"));
             return true;
         }
 
@@ -177,9 +193,15 @@ public class BlockPartySetup implements GameSetupHandler {
             case "remove" -> handlePatternRemove(context);
             case "list" -> handlePatternList(context);
             case "initial" -> handlePatternInitial(context);
+            case "type" -> handlePatternType(context);
+            case "status" -> handlePatternStatus(context);
+            case "templates" -> {
+                handlePatternTemplates(context, context.getData());
+                yield true;
+            }
             default -> {
                 context.getMessagesAPI().sendRaw(context.getPlayer(),
-                        module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern_add"));
+                        module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern"));
                 yield true;
             }
         };
@@ -330,6 +352,113 @@ public class BlockPartySetup implements GameSetupHandler {
         }
 
         return true;
+    }
+
+    private boolean handlePatternType(SetupContext<Player, CommandSender, Location> context) {
+        if (!context.hasHandlerArgs(2)) {
+            send(context, "setup_messages.usage_pattern_type",
+                    "{prefix} <yellow>Usage: /baa game [arena_id] block_party pattern type <static|procedural></yellow>");
+            return true;
+        }
+
+        String type = context.getHandlerArg(1).toLowerCase(Locale.ENGLISH);
+        SetupDataAPI data = context.getData();
+        if (!"static".equals(type) && !"procedural".equals(type)) {
+            send(context, "setup_messages.usage_pattern_type",
+                    "{prefix} <yellow>Usage: /baa game [arena_id] block_party pattern type <static|procedural></yellow>");
+            return true;
+        }
+
+        data.setString("game.pattern.type", type);
+        data.save();
+        if ("procedural".equals(type)) {
+            send(context, "setup_messages.pattern_type_set_procedural",
+                    "{prefix} <green>Pattern type set to <yellow>procedural</yellow>. A new pattern will be generated each round; saved patterns will be ignored.</green>");
+        } else {
+            send(context, "setup_messages.pattern_type_set_static",
+                    "{prefix} <green>Pattern type set to <yellow>static</yellow>. Saved patterns will be used.</green>");
+        }
+        return true;
+    }
+
+    private boolean handlePatternStatus(SetupContext<Player, CommandSender, Location> context) {
+        SetupDataAPI data = context.getData();
+        String type = data.getString("game.pattern.type");
+        if (type == null || type.isBlank()) {
+            type = "not set";
+        }
+        String templates = data.getString("game.pattern.templates");
+        if (templates == null || templates.isBlank()) {
+            templates = "all";
+        }
+        send(context, "setup_messages.pattern_type_status",
+                "{prefix} <gray>Pattern type: <yellow>{type}</yellow>, templates: <yellow>{templates}</yellow></gray>",
+                "{type}", type, "{templates}", templates);
+        return true;
+    }
+
+    private void handlePatternTemplates(SetupContext<Player, CommandSender, Location> context, SetupDataAPI data) {
+        if (!context.hasHandlerArgs(2)) {
+            send(context, "setup_messages.usage_pattern_templates",
+                    "{prefix} <yellow>Usage: /baa game [arena_id] block_party pattern templates <all|type...></yellow>");
+            return;
+        }
+
+        List<String> templates = new ArrayList<>();
+        boolean useAllTemplates = false;
+        int index = 1;
+        while (context.hasHandlerArgs(index + 1)) {
+            String[] values = context.getHandlerArg(index).toLowerCase(Locale.ENGLISH).split(",");
+            for (String value : values) {
+                String template = value.trim();
+                if (template.equals("all")) {
+                    useAllTemplates = true;
+                    index = Integer.MAX_VALUE;
+                    break;
+                }
+                if (!template.isEmpty() && ProceduralPatternGenerator.TEMPLATE_TYPES.contains(template)
+                        && !templates.contains(template)) {
+                    templates.add(template);
+                }
+            }
+            if (index == Integer.MAX_VALUE) {
+                break;
+            }
+            index++;
+        }
+
+        if (useAllTemplates) {
+            data.remove("game.pattern.templates");
+            data.save();
+            send(context, "setup_messages.pattern_templates_updated",
+                    "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>",
+                    "{templates}", "all");
+            return;
+        }
+        if (templates.isEmpty()) {
+            send(context, "setup_messages.pattern_templates_invalid",
+                    "{prefix} <red>No valid procedural templates were provided.</red>");
+            return;
+        }
+        data.setString("game.pattern.templates", String.join(",", templates));
+        data.save();
+        send(context, "setup_messages.pattern_templates_updated",
+                "{prefix} <green>Procedural templates: <yellow>{templates}</yellow>.</green>",
+                "{templates}", String.join(", ", templates));
+    }
+
+    private void send(SetupContext<Player, CommandSender, Location> context, String path, String fallback,
+                      String... replacements) {
+        String message = module.getModuleConfig().getStringFrom("language.yml", path);
+        if (message == null || message.isBlank()) {
+            message = fallback;
+        }
+        for (int i = 0; i + 1 < replacements.length; i += 2) {
+            message = message.replace(replacements[i], replacements[i + 1]);
+        }
+        String prefix = module.getCoreConfig().getLanguage("prefix");
+        message = message.replace("{prefix}", prefix == null ? "" : prefix);
+        context.getMessagesAPI().sendRaw(context.getPlayer(), message);
     }
 
     private List<String> parseIndex(String index) {

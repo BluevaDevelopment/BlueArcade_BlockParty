@@ -293,7 +293,14 @@ public class BlockPartyGame {
 
     private BlockPartyState createState(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context,
                                         FloorBounds floor) {
-        Map<String, BlockPattern<Location, String>> patterns = patternService.loadPatterns(context, floor);
+        String patternType = context.getDataAccess().getGameData("game.pattern.type", String.class);
+        if (patternType == null || patternType.isBlank()) {
+            patternType = "static";
+        }
+        boolean procedural = "procedural".equalsIgnoreCase(patternType);
+        Map<String, BlockPattern<Location, String>> patterns = procedural
+                ? new HashMap<>()
+                : patternService.loadPatterns(context, floor);
         List<String> order = new ArrayList<>(patterns.keySet());
         String initialPatternKey = context.getDataAccess().getGameData("game.patterns.initial", String.class);
         if (initialPatternKey == null || !patterns.containsKey(initialPatternKey)) {
@@ -320,7 +327,26 @@ public class BlockPartyGame {
             module.getSettings().setMinSearchTime(configuredMin);
         }
 
-        return new BlockPartyState(context.getArenaId(), floor, patterns, order, initialPatternKey, startingSearchTime);
+        List<String> proceduralTemplates = readProceduralTemplates(context);
+        long matchSeed = ThreadLocalRandom.current().nextLong();
+        return new BlockPartyState(context.getArenaId(), floor, patterns, order, initialPatternKey, startingSearchTime,
+                procedural, proceduralTemplates, matchSeed);
+    }
+
+    private List<String> readProceduralTemplates(
+            GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
+        String configured = context.getDataAccess().getGameData("game.pattern.templates", String.class);
+        if (configured == null || configured.isBlank()) {
+            return module.getSettings().getProceduralTemplates();
+        }
+        List<String> templates = new ArrayList<>();
+        for (String value : configured.split(",")) {
+            String template = value.trim().toLowerCase(java.util.Locale.ROOT);
+            if (!template.isEmpty()) {
+                templates.add(template);
+            }
+        }
+        return templates.isEmpty() ? module.getSettings().getProceduralTemplates() : templates;
     }
 
     private void sendDescription(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
@@ -379,8 +405,19 @@ public class BlockPartyGame {
         powerupService.clearArenaPowerups(context);
 
         state.setRound(state.getRound() + 1);
-        String patternKey = patternService.selectPatternKey(state, firstRound);
-        BlockPattern<Location, String> pattern = state.getPatterns().get(patternKey);
+        BlockPattern<Location, String> pattern = null;
+        if (state.usesProceduralPatterns()) {
+            try {
+                pattern = patternService.createProceduralPattern(context, state);
+            } catch (RuntimeException exception) {
+                java.util.logging.Logger.getLogger(BlockPartyGame.class.getName())
+                        .warning("[BlockParty] Failed to generate a procedural pattern for arena "
+                                + state.getArenaId() + ": " + exception.getMessage());
+            }
+        } else {
+            String patternKey = patternService.selectPatternKey(state, firstRound);
+            pattern = state.getPatterns().get(patternKey);
+        }
         if (pattern == null && !state.getPatterns().isEmpty()) {
             pattern = state.getPatterns().values().iterator().next();
         }
@@ -504,13 +541,16 @@ public class BlockPartyGame {
             if (player == null) {
                 continue;
             }
-            Location location = resolvePlayerLocation(player);
-            if (location == null) {
-                continue;
-            }
-            if (isOnTargetBlock(state, location) && module.getStatsAPI() != null) {
-                module.getStatsAPI().addModuleStat(player, module.getModuleInfo().getId(), "correct_blocks", 1);
-            }
+            // resolvePlayerLocation touches the entity store, which must be accessed on the world thread.
+            context.getSchedulerAPI().runAtEntity(player, () -> {
+                Location location = resolvePlayerLocation(player);
+                if (location == null) {
+                    return;
+                }
+                if (isOnTargetBlock(state, location) && module.getStatsAPI() != null) {
+                    module.getStatsAPI().addModuleStat(player, module.getModuleInfo().getId(), "correct_blocks", 1);
+                }
+            });
         }
 
         if (context.getAlivePlayers().size() <= 1) {
@@ -593,7 +633,8 @@ public class BlockPartyGame {
             if (player == null) {
                 continue;
             }
-            handleMovementTickForPlayer(context, player);
+            // Player location is backed by the entity store, which must be read on the world thread.
+            context.getSchedulerAPI().runAtEntity(player, () -> handleMovementTickForPlayer(context, player));
         }
     }
 
