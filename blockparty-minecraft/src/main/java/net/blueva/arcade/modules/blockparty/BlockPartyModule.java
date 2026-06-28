@@ -173,7 +173,7 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Mat
     /**
      * Extracts bundled .nbs music files from the module jar to the module's music folder.
      * The list of files to extract is read from bundled_music/music_list.txt inside the jar.
-     * Files are copied only on the very first load and are never overwritten afterwards.
+     * Files are only extracted while the music folder is empty, so deleting a song keeps it gone.
      */
     private void extractBundledMusic() {
         if (moduleConfig == null) {
@@ -183,11 +183,12 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Mat
         if (moduleFolder == null) {
             return;
         }
-        // If the module has already been configured, do not re-extract bundled songs.
-        if (new File(moduleFolder, "settings.yml").exists()) {
+        File musicDir = new File(moduleFolder, "music");
+        // If the music folder already has files, leave it alone so deleted songs stay gone.
+        File[] existing = musicDir.listFiles();
+        if (musicDir.exists() && musicDir.isDirectory() && existing != null && existing.length > 0) {
             return;
         }
-        File musicDir = new File(moduleFolder, "music");
         if (!musicDir.exists() && !musicDir.mkdirs()) {
             return;
         }

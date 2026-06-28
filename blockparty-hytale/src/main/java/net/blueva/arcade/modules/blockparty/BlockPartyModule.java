@@ -142,11 +142,7 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
     /**
      * Extracts bundled .midi music files from the module jar to the module's music folder.
      * The list of files to extract is read from bundled_music/music_list.txt inside the jar.
-     * Files are copied only on the very first load and are never overwritten afterwards.
-     *
-     * This only runs on the very first load, before the module has generated its config files.
-     * Once settings.yml exists, we assume the server owner has set up the module and we leave
-     * the music folder alone so deleted songs do not re-appear on restart.
+     * Files are only extracted while the music folder is empty, so deleting a song keeps it gone.
      */
     private void extractBundledMusic() {
         if (moduleConfig == null) {
@@ -156,11 +152,12 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
         if (moduleFolder == null) {
             return;
         }
-        // If the module has already been configured, do not re-extract bundled songs.
-        if (new File(moduleFolder, "settings.yml").exists()) {
+        File musicDir = new File(moduleFolder, "music");
+        // If the music folder already has files, leave it alone so deleted songs stay gone.
+        File[] existing = musicDir.listFiles();
+        if (musicDir.exists() && musicDir.isDirectory() && existing != null && existing.length > 0) {
             return;
         }
-        File musicDir = new File(moduleFolder, "music");
         if (!musicDir.exists() && !musicDir.mkdirs()) {
             return;
         }
