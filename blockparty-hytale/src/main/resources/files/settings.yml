@@ -1,11 +1,17 @@
+#  ____  _               _                      _
+# | __ )| |_   _  ___   / \   _ __ ___ __ _  __| | ___
+# |  _ \| | | | |/ _ \ / _ \ | '__/ __/ _` |/ _` |/ _ \
+# | |_) | | |_| |  __// ___ \| | | (_| (_| | (_| |  __/
+# |____/|_|\__,_|\___/_/   \_|_|  \___\__,_|\__,_|\___|
+#
+# [!] Arcade by Blueva | https://blueva.net/store/blue-arcade [!]
+
 # Block Party Module Settings
 # Songs from: https://github.com/nickg2/NBSsongs 
-
-file_version: 4
 # Visual representation in menus
 menus:
   vote:
-    item: Stone
+    item: "Stone"
 
 gameplay:
   # How far below the lowest floor a player must fall to be eliminated
@@ -32,18 +38,18 @@ gameplay:
     downward_velocity: 0.3
     horizontal_randomness: 0.08
   # Game mode players will be put in when game starts
-  game_mode: Adventure
+  game_mode: "Adventure"
 
 particles:
   region:
     enabled: true
-    type: NOTE
+    type: "NOTE"
     count: 6
     spacing: 3.5
     speed: 0.02
   collapse:
     enabled: false
-    type: FLAME
+    type: "FLAME"
     count: 10
     spread: 0.35
     speed: 0.1
@@ -52,17 +58,17 @@ fallback_pattern:
   # Configure block IDs that exist on your Hytale server
   # These are basic blocks that should work on any server
   materials:
-    - Stone
-    - Sand
-    - Dirt
-    - Wood
-    - Grass
+    - "Stone"
+    - "Sand"
+    - "Dirt"
+    - "Wood"
+    - "Grass"
 
 powerups:
   enabled: true
   spawn_interval_ticks: 200
   max_active: 2
-  item: Stone
+  item: "Stone"
   bonus_time_ticks: 40
   speed:
     duration_ticks: 160
@@ -71,7 +77,7 @@ powerups:
     radius: 2
   particles:
     enabled: true
-    type: WITCH
+    type: "WITCH"
     count: 12
     spread: 0.35
     speed: 0.12

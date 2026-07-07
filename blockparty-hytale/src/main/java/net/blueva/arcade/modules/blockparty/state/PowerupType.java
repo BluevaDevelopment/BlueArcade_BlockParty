@@ -18,11 +18,11 @@ public enum PowerupType {
 
     public String getDisplayName(ModuleConfigAPI moduleConfig) {
         String key = "powerup_names." + name();
-        return moduleConfig.getStringFrom("language.yml", key, name().toLowerCase(Locale.ENGLISH));
+        return moduleConfig.getTranslation(null, key);
     }
 
     public String getLore(ModuleConfigAPI moduleConfig) {
-        return moduleConfig.getStringFrom("language.yml", "powerup_lore." + name(), "");
+        return moduleConfig.getTranslation(null, "powerup_lore." + name());
     }
 
     public String getPlainName() {

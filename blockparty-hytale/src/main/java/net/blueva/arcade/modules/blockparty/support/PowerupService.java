@@ -123,7 +123,7 @@ public class PowerupService {
             module.getStatsAPI().addModuleStat(player, module.getModuleInfo().getId(), "powerups_used", 1);
         }
 
-        String message = module.getModuleConfig().getStringFrom("language.yml", "messages.powerups.collected")
+        String message = module.getModuleConfig().getTranslation(player, "messages.powerups.collected")
                 .replace("{player}", player.getPlayerRef().getUsername())
                 .replace("{powerup}", instance.getType().getPlainName());
 

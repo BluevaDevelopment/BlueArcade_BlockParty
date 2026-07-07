@@ -32,6 +32,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Map;
+import net.blueva.arcade.api.setup.ModuleSetupCommand;
+import net.blueva.arcade.api.setup.ModuleSetupMetadata;
+import net.blueva.arcade.api.setup.ModuleSetupStep;
+import net.blueva.arcade.api.setup.ModuleSetupStatusCheck;
+import java.util.List;
 
 public class BlockPartyModule implements GameModule<Player, Location, World, String, ItemStack, String, Holder, Entity, EventSubscription<?>, Short> {
 
@@ -57,9 +62,8 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
         VoteMenuAPI<String> voteMenu = ModuleAPI.getVoteMenuAPI();
         AchievementsAPI achievementsAPI = ModuleAPI.getAchievementsAPI();
 
-        moduleConfig.register("language.yml", 1);
-        moduleConfig.register("settings.yml", 1);
-        moduleConfig.register("achievements.yml", 1);
+        moduleConfig.register("settings.yml");
+        moduleConfig.register("achievements.yml");
 
         extractBundledMusic();
 
@@ -80,8 +84,8 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
             voteMenu.registerGame(
                     moduleInfo.getId(),
                     voteItem,
-                    moduleConfig.getStringFrom("language.yml", "vote_menu.name"),
-                    moduleConfig.getStringListFrom("language.yml", "vote_menu.lore")
+                    moduleConfig.getTranslation(null, "vote_menu.name"),
+                    moduleConfig.getTranslationList(null, "vote_menu.lore")
             );
         }
 
@@ -232,6 +236,55 @@ public class BlockPartyModule implements GameModule<Player, Location, World, Str
 
     public void handleWin(Player player) {
         game.handleWin(player);
+    }
+
+
+
+    @Override
+    public boolean requiresSpawnCapacityValidation() {
+        return false;
+    }
+
+    @Override
+    public ModuleSetupMetadata getSetupMetadata() {
+        return new ModuleSetupMetadata() {
+
+            @Override
+            public List<ModuleSetupStep> getSetupSteps() {
+                return List.of(
+                        new ModuleSetupStep("decreasetime", true, "Configure Decreasetime", "Configure the module-specific decreasetime setup data.", List.of("/baa game <arena> block_party decreasetime"), "seconds"),
+                        new ModuleSetupStep("floor", true, "Configure Floor", "Configure the module-specific floor setup data.", List.of("/baa game <arena> block_party floor"), "selection region"),
+                        new ModuleSetupStep("mintime", true, "Configure Mintime", "Configure the module-specific mintime setup data.", List.of("/baa game <arena> block_party mintime"), "seconds"),
+                        new ModuleSetupStep("musictime", true, "Configure Musictime", "Configure the module-specific musictime setup data.", List.of("/baa game <arena> block_party musictime"), "seconds"),
+                        new ModuleSetupStep("pattern", true, "Configure Pattern", "Configure the module-specific pattern setup data.", List.of("/baa game <arena> block_party pattern"), "pattern type and saved patterns"),
+                        new ModuleSetupStep("searchtime", true, "Configure Searchtime", "Configure the module-specific searchtime setup data.", List.of("/baa game <arena> block_party searchtime"), "seconds")
+                );
+            }
+
+            @Override
+            public List<ModuleSetupCommand> getSetupCommands() {
+                return List.of(
+                        new ModuleSetupCommand("decreasetime", "/baa game <arena> block_party decreasetime", "Configure decreasetime setup data.", true),
+                        new ModuleSetupCommand("floor", "/baa game <arena> block_party floor", "Configure floor setup data.", true),
+                        new ModuleSetupCommand("mintime", "/baa game <arena> block_party mintime", "Configure mintime setup data.", true),
+                        new ModuleSetupCommand("musictime", "/baa game <arena> block_party musictime", "Configure musictime setup data.", true),
+                        new ModuleSetupCommand("pattern", "/baa game <arena> block_party pattern", "Configure pattern setup data.", true),
+                        new ModuleSetupCommand("searchtime", "/baa game <arena> block_party searchtime", "Configure searchtime setup data.", true)
+                );
+            }
+
+            @Override
+            public List<ModuleSetupStatusCheck<?, ?, ?>> getStatusChecks() {
+                return List.of(
+                        new ModuleSetupStatusCheck<>("decreasetime", true, "Set the decrease time.", context -> context.getData().getDouble("basic.decrease_time", 0.0D) > 0.0D || context.getData().getInt("basic.decrease_time", 0) > 0),
+                        new ModuleSetupStatusCheck<>("floor", true, "Select the floor region.", context -> context.getData().has("game.floor.bounds.min.x") && context.getData().has("game.floor.bounds.max.x")),
+                        new ModuleSetupStatusCheck<>("mintime", true, "Set the minimum time.", context -> context.getData().getDouble("basic.min_search_time", 0.0D) > 0.0D || context.getData().getInt("basic.min_search_time", 0) > 0),
+                        new ModuleSetupStatusCheck<>("musictime", true, "Set the music time.", context -> context.getData().getDouble("basic.initial_music_time", 0.0D) > 0.0D || context.getData().getInt("basic.initial_music_time", 0) > 0),
+                        new ModuleSetupStatusCheck<>("pattern", true, "Set the pattern type and save at least one pattern when using static patterns.", context -> (context.getData().has("game.pattern.type") || context.getData().has("game.patterns.index")) && ("procedural".equalsIgnoreCase(String.valueOf(context.getData().getString("game.pattern.type"))) || context.getData().has("game.patterns.index"))),
+                        new ModuleSetupStatusCheck<>("searchtime", true, "Set the search time.", context -> context.getData().getDouble("basic.search_time", 0.0D) > 0.0D || context.getData().getInt("basic.search_time", 0) > 0)
+                );
+            }
+        };
     }
 
 }

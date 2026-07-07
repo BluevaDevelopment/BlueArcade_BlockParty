@@ -1,10 +1,17 @@
-file_version: 1
+#  ____  _               _                      _
+# | __ )| |_   _  ___   / \   _ __ ___ __ _  __| | ___
+# |  _ \| | | | |/ _ \ / _ \ | '__/ __/ _` |/ _` |/ _ \
+# | |_) | | |_| |  __// ___ \| | | (_| (_| | (_| |  __/
+# |____/|_|\__,_|\___/_/   \_|_|  \___\__,_|\__,_|\___|
+#
+# [!] Arcade by Blueva | https://blueva.net/store/blue-arcade [!]
+
 category:
-  id: block_party
+  id: "block_party"
   name: "Block Party"
   description:
     - "Achievements tied to Block Party."
-  icon: Wool_Pink
+  icon: "Wool_Pink"
   sort_order: 30
 
 achievements:
@@ -12,7 +19,7 @@ achievements:
     name: "Dancefloor Rookie"
     description:
       - "Play Block Party matches."
-    icon: Wool_White
+    icon: "Wool_White"
     phases:
       1:
         name: "First track"
@@ -26,7 +33,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=10"
           messages:
             - "  <gold>C</gold> <yellow>+10 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+10 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+10 XP</light_purple>"
       2:
         name: "Opening act"
         description:
@@ -39,7 +46,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=25"
           messages:
             - "  <gold>C</gold> <yellow>+25 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+25 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+25 XP</light_purple>"
       3:
         name: "Warmed up"
         description:
@@ -52,7 +59,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=40"
           messages:
             - "  <gold>C</gold> <yellow>+40 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+40 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+40 XP</light_purple>"
       4:
         name: "Headliner"
         description:
@@ -65,7 +72,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=60"
           messages:
             - "  <gold>C</gold> <yellow>+60 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+60 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+60 XP</light_purple>"
       5:
         name: "Encore loop"
         description:
@@ -78,13 +85,13 @@ achievements:
             - "baa xp --action=give --target={player} --amount=90"
           messages:
             - "  <gold>C</gold> <yellow>+90 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+90 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+90 XP</light_purple>"
 
   color_matcher:
     name: "Color Matcher"
     description:
       - "Stand on the right colors."
-    icon: Wool_Pink
+    icon: "Wool_Pink"
     phases:
       1:
         name: "On beat"
@@ -98,7 +105,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=15"
           messages:
             - "  <gold>C</gold> <yellow>+15 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+15 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+15 XP</light_purple>"
       2:
         name: "Rhythm reader"
         description:
@@ -111,7 +118,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=35"
           messages:
             - "  <gold>C</gold> <yellow>+35 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+35 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+35 XP</light_purple>"
       3:
         name: "Pattern pro"
         description:
@@ -124,7 +131,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=55"
           messages:
             - "  <gold>C</gold> <yellow>+55 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+55 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+55 XP</light_purple>"
       4:
         name: "Choreographer"
         description:
@@ -137,7 +144,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=80"
           messages:
             - "  <gold>C</gold> <yellow>+80 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+80 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+80 XP</light_purple>"
       5:
         name: "Beat architect"
         description:
@@ -150,13 +157,13 @@ achievements:
             - "baa xp --action=give --target={player} --amount=120"
           messages:
             - "  <gold>C</gold> <yellow>+120 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+120 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+120 XP</light_purple>"
 
   party_champion:
     name: "Party Champion"
     description:
       - "Win Block Party matches."
-    icon: Wool_Yellow
+    icon: "Wool_Yellow"
     phases:
       1:
         name: "First clear"
@@ -170,7 +177,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=20"
           messages:
             - "  <gold>C</gold> <yellow>+20 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+20 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+20 XP</light_purple>"
       2:
         name: "Dance crown"
         description:
@@ -183,7 +190,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=45"
           messages:
             - "  <gold>C</gold> <yellow>+45 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+45 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+45 XP</light_purple>"
       3:
         name: "Head choreographer"
         description:
@@ -196,7 +203,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=70"
           messages:
             - "  <gold>C</gold> <yellow>+70 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+70 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+70 XP</light_purple>"
       4:
         name: "Dancefloor monarch"
         description:
@@ -209,7 +216,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=100"
           messages:
             - "  <gold>C</gold> <yellow>+100 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+100 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+100 XP</light_purple>"
       5:
         name: "Block party legend"
         description:
@@ -222,13 +229,13 @@ achievements:
             - "baa xp --action=give --target={player} --amount=150"
           messages:
             - "  <gold>C</gold> <yellow>+150 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+150 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+150 XP</light_purple>"
 
   groove_collector:
     name: "Groove Collector"
     description:
       - "Collect power-ups during matches."
-    icon: Wool_Black
+    icon: "Wool_Black"
     phases:
       1:
         name: "Quick grab"
@@ -242,7 +249,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=15"
           messages:
             - "  <gold>C</gold> <yellow>+15 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+15 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+15 XP</light_purple>"
       2:
         name: "Loot runner"
         description:
@@ -255,7 +262,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=35"
           messages:
             - "  <gold>C</gold> <yellow>+35 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+35 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+35 XP</light_purple>"
       3:
         name: "Supply expert"
         description:
@@ -268,7 +275,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=55"
           messages:
             - "  <gold>C</gold> <yellow>+55 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+55 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+55 XP</light_purple>"
       4:
         name: "Treasure seeker"
         description:
@@ -281,7 +288,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=80"
           messages:
             - "  <gold>C</gold> <yellow>+80 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+80 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+80 XP</light_purple>"
       5:
         name: "Beat hoarder"
         description:
@@ -294,13 +301,13 @@ achievements:
             - "baa xp --action=give --target={player} --amount=120"
           messages:
             - "  <gold>C</gold> <yellow>+120 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+120 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+120 XP</light_purple>"
 
   rhythm_specialist:
     name: "Rhythm Specialist"
     description:
       - "Stay consistent across colors and matches."
-    icon: Wool_Black
+    icon: "Wool_Black"
     phases:
       1:
         name: "Steady beat"
@@ -314,7 +321,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=30"
           messages:
             - "  <gold>C</gold> <yellow>+30 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+30 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+30 XP</light_purple>"
       2:
         name: "Full routine"
         description:
@@ -327,7 +334,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=60"
           messages:
             - "  <gold>C</gold> <yellow>+60 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+60 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+60 XP</light_purple>"
       3:
         name: "Showtime"
         description:
@@ -340,7 +347,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=90"
           messages:
             - "  <gold>C</gold> <yellow>+90 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+90 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+90 XP</light_purple>"
       4:
         name: "Headliner tour"
         description:
@@ -353,7 +360,7 @@ achievements:
             - "baa xp --action=give --target={player} --amount=130"
           messages:
             - "  <gold>C</gold> <yellow>+130 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+130 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+130 XP</light_purple>"
       5:
         name: "Endless encore"
         description:
@@ -366,4 +373,4 @@ achievements:
             - "baa xp --action=give --target={player} --amount=190"
           messages:
             - "  <gold>C</gold> <yellow>+190 credits</yellow>"
-            - "  <purple>XP</purple> <light_purple>+190 XP</light_purple>"
+            - "  <dark_purple>XP</dark_purple> <light_purple>+190 XP</light_purple>"

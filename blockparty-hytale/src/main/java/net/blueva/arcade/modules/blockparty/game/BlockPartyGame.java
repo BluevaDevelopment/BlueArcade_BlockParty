@@ -104,11 +104,11 @@ public class BlockPartyGame {
 
             context.getSoundsAPI().play(player, module.getCoreConfig().getSound("sounds.starting_game.countdown"));
 
-            String title = module.getCoreConfig().getLanguage("titles.starting_game.title")
+            String title = module.getCoreConfig().getLanguage(player, "titles.starting_game.title")
                     .replace("{game_display_name}", module.getModuleInfo().getName())
                     .replace("{time}", String.valueOf(secondsLeft));
 
-            String subtitle = module.getCoreConfig().getLanguage("titles.starting_game.subtitle")
+            String subtitle = module.getCoreConfig().getLanguage(player, "titles.starting_game.subtitle")
                     .replace("{game_display_name}", module.getModuleInfo().getName())
                     .replace("{time}", String.valueOf(secondsLeft));
 
@@ -122,10 +122,10 @@ public class BlockPartyGame {
                 continue;
             }
 
-            String title = module.getCoreConfig().getLanguage("titles.game_started.title")
+            String title = module.getCoreConfig().getLanguage(player, "titles.game_started.title")
                     .replace("{game_display_name}", module.getModuleInfo().getName());
 
-            String subtitle = module.getCoreConfig().getLanguage("titles.game_started.subtitle")
+            String subtitle = module.getCoreConfig().getLanguage(player, "titles.game_started.subtitle")
                     .replace("{game_display_name}", module.getModuleInfo().getName());
 
             context.getTitlesAPI().sendRaw(player, title, subtitle, 0, 20, 20);
@@ -266,7 +266,7 @@ public class BlockPartyGame {
         }
 
         broadcastDeathMessage(context, player);
-        context.eliminatePlayer(player, module.getModuleConfig().getStringFrom("language.yml", "messages.eliminated"));
+        context.eliminatePlayer(player, module.getModuleConfig().getTranslation(player, "messages.eliminated"));
         playerEffectsService.clearInventory(player);
         context.getSoundsAPI().play(player, module.getCoreConfig().getSound("sounds.in_game.respawn"));
 
@@ -350,8 +350,8 @@ public class BlockPartyGame {
     }
 
     private void sendDescription(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
-        List<String> description = module.getModuleConfig().getStringListFrom("language.yml", "description.default");
         for (Player player : context.getPlayers()) {
+            List<String> description = module.getModuleConfig().getTranslationList(player, "description.default");
             for (String line : description) {
                 context.getMessagesAPI().sendRaw(player, line);
             }
@@ -359,12 +359,11 @@ public class BlockPartyGame {
     }
 
     private void sendStartTitle(GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context) {
-        String title = module.getCoreConfig().getLanguage("titles.game_started.title")
-                .replace("{game_display_name}", module.getModuleInfo().getName());
-        String subtitle = module.getCoreConfig().getLanguage("titles.game_started.subtitle")
-                .replace("{game_display_name}", module.getModuleInfo().getName());
-
         for (Player player : context.getPlayers()) {
+            String title = module.getCoreConfig().getLanguage(player, "titles.game_started.title")
+                    .replace("{game_display_name}", module.getModuleInfo().getName());
+            String subtitle = module.getCoreConfig().getLanguage(player, "titles.game_started.subtitle")
+                    .replace("{game_display_name}", module.getModuleInfo().getName());
             context.getTitlesAPI().sendRaw(player, title, subtitle, 0, 20, 10);
         }
     }
@@ -446,7 +445,7 @@ public class BlockPartyGame {
 
         for (Player player : context.getPlayers()) {
             context.getMessagesAPI().sendRaw(player,
-                    module.getModuleConfig().getStringFrom("language.yml", "messages.round.starting")
+                    module.getModuleConfig().getTranslation(player, "messages.round.starting")
                             .replace("{bp_round}", String.valueOf(state.getRound())));
 
             if (musicTrack != null) {
@@ -489,7 +488,7 @@ public class BlockPartyGame {
         state.setDisplayedTime(BlockPartyUtils.ticksToSeconds(state.getPhaseTicksRemaining()));
 
         for (Player player : context.getPlayers()) {
-            String message = module.getModuleConfig().getStringFrom("language.yml", "messages.round.reveal")
+            String message = module.getModuleConfig().getTranslation(player, "messages.round.reveal")
                     .replace("{block}", BlockPartyUtils.formatMaterialName(state.getTargetMaterial()));
             context.getMessagesAPI().sendRaw(player, message);
             playerEffectsService.giveTargetItem(player, state.getTargetMaterial());
@@ -518,7 +517,7 @@ public class BlockPartyGame {
         }
 
         for (Player player : context.getPlayers()) {
-            context.getMessagesAPI().sendRaw(player, module.getModuleConfig().getStringFrom("language.yml", "messages.round.collapsing"));
+            context.getMessagesAPI().sendRaw(player, module.getModuleConfig().getTranslation(player, "messages.round.collapsing"));
         }
 
         playerEffectsService.clearPlayerInventories(context);
@@ -582,9 +581,6 @@ public class BlockPartyGame {
                                   BlockPartyState state) {
         List<Player> players = context.getPlayers();
         boolean showCountdown = state.getPhase() == RoundPhase.SEARCH;
-        String actionBarTemplate = showCountdown
-                ? module.getModuleConfig().getStringFrom("language.yml", "action_bar.search")
-                : null;
         state.setDisplayedTime(showCountdown ? Math.max(0, BlockPartyUtils.ticksToSeconds(state.getPhaseTicksRemaining())) : 0);
 
         for (Player player : players) {
@@ -596,7 +592,8 @@ public class BlockPartyGame {
             placeholders.put("bp_time", showCountdown ? BlockPartyUtils.formatSeconds(state.getDisplayedTime()) : "-");
             placeholders.put("bp_round", String.valueOf(state.getRound()));
 
-            if (showCountdown && actionBarTemplate != null) {
+            if (showCountdown) {
+                String actionBarTemplate = module.getModuleConfig().getTranslation(player, "action_bar.search");
                 String actionBarMessage = actionBarTemplate
                         .replace("{bp_time}", BlockPartyUtils.formatSeconds(state.getDisplayedTime()))
                         .replace("{bp_round}", String.valueOf(state.getRound()));
@@ -721,7 +718,7 @@ public class BlockPartyGame {
     }
 
     private String getRandomMessage(String path) {
-        List<String> messages = module.getModuleConfig().getStringListFrom("language.yml", path);
+        List<String> messages = module.getModuleConfig().getTranslationList(null, path);
         if (messages == null || messages.isEmpty()) {
             return null;
         }
@@ -892,4 +889,10 @@ public class BlockPartyGame {
             Player.setGameMode(ref, finalTargetMode, store);
         });
     }
+
+    private static String formatCountdownTime(int seconds) {
+        int safeSeconds = Math.max(0, seconds);
+        return String.format("%02d:%02d", safeSeconds / 60, safeSeconds % 60);
+    }
+
 }

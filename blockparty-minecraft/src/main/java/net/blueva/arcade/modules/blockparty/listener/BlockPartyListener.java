@@ -20,6 +20,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.entity.Projectile;
@@ -105,7 +106,7 @@ public class BlockPartyListener implements Listener {
             return;
         }
 
-        if (context.getSpectators().contains(player) || player.getGameMode() == GameMode.SPECTATOR) {
+        if (context.getSpectators().contains(player) || context.isPlayerSpectating(player)) {
             return;
         }
 
@@ -127,6 +128,25 @@ public class BlockPartyListener implements Listener {
         GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context =
                 module.getGame().getGameContext(victim);
         if (context == null) {
+            return;
+        }
+
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPlayerFallDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+
+        if (event.getCause() != EntityDamageEvent.DamageCause.FALL) {
+            return;
+        }
+
+        GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context =
+                module.getGame().getGameContext(player);
+        if (context == null || !context.isPlayerPlaying(player)) {
             return;
         }
 

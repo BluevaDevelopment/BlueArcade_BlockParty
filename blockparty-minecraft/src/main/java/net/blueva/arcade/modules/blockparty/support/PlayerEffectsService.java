@@ -84,7 +84,7 @@ public class PlayerEffectsService {
         }
 
         ItemStack item = new ItemStack(target);
-        String name = module.getModuleConfig().getStringFrom("language.yml", "items.target_name");
+        String name = module.getModuleConfig().getTranslation(player, "items.target_name");
         ItemAPI<Player, ItemStack, Material> itemAPI = module.getItemAPI();
         if (itemAPI != null && name != null) {
             item = itemAPI.decorate(item, name, Collections.emptyList());

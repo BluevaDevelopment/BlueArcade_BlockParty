@@ -58,36 +58,11 @@ public class BlockPartyDamageListener extends EntityEventSystem<EntityStore, Dam
 
         GameContext<Player, Location, World, String, ItemStack, String, Holder, Entity> context =
                 game.getGameContext(victimPlayer);
-        if (context == null) {
-            return;
-        }
-
-        Player attacker = resolveAttacker(damage, store);
-        if (attacker == null) {
+        if (context == null || !context.isPlayerPlaying(victimPlayer)) {
             return;
         }
 
         damage.setCancelled(true);
-    }
-
-    @Nullable
-    private Player resolveAttacker(@Nonnull Damage damage, @Nonnull Store<EntityStore> store) {
-        Damage.Source source = damage.getSource();
-        if (!(source instanceof Damage.EntitySource entitySource)) {
-            return null;
-        }
-
-        Ref<EntityStore> attackerRef = entitySource.getRef();
-        if (attackerRef == null || !attackerRef.isValid()) {
-            return null;
-        }
-
-        Store<EntityStore> attackerStore = attackerRef.getStore();
-        if (attackerStore == null) {
-            return null;
-        }
-
-        return attackerStore.getComponent(attackerRef, Player.getComponentType());
     }
 
     @Nullable

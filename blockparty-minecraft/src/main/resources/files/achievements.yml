@@ -1,10 +1,17 @@
-file_version: 1
+#  ____  _               _                      _
+# | __ )| |_   _  ___   / \   _ __ ___ __ _  __| | ___
+# |  _ \| | | | |/ _ \ / _ \ | '__/ __/ _` |/ _` |/ _ \
+# | |_) | | |_| |  __// ___ \| | | (_| (_| | (_| |  __/
+# |____/|_|\__,_|\___/_/   \_|_|  \___\__,_|\__,_|\___|
+#
+# [!] Arcade by Blueva | https://blueva.net/store/blue-arcade [!]
+
 category:
-  id: block_party
+  id: "block_party"
   name: "Block Party"
   description:
     - "Achievements tied to Block Party."
-  icon: MUSIC_DISC_CAT
+  icon: "MUSIC_DISC_CAT"
   sort_order: 30
 
 achievements:
@@ -12,7 +19,7 @@ achievements:
     name: "Dancefloor Rookie"
     description:
       - "Play Block Party matches."
-    icon: JUKEBOX
+    icon: "JUKEBOX"
     phases:
       1:
         name: "First track"
@@ -84,7 +91,7 @@ achievements:
     name: "Color Matcher"
     description:
       - "Stand on the right colors."
-    icon: PURPLE_CONCRETE
+    icon: "PURPLE_CONCRETE"
     phases:
       1:
         name: "On beat"
@@ -156,7 +163,7 @@ achievements:
     name: "Party Champion"
     description:
       - "Win Block Party matches."
-    icon: DIAMOND
+    icon: "DIAMOND"
     phases:
       1:
         name: "First clear"
@@ -228,7 +235,7 @@ achievements:
     name: "Groove Collector"
     description:
       - "Collect power-ups during matches."
-    icon: AMETHYST_SHARD
+    icon: "AMETHYST_SHARD"
     phases:
       1:
         name: "Quick grab"
@@ -300,7 +307,7 @@ achievements:
     name: "Rhythm Specialist"
     description:
       - "Stay consistent across colors and matches."
-    icon: BEACON
+    icon: "BEACON"
     phases:
       1:
         name: "Steady beat"

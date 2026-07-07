@@ -38,16 +38,16 @@ public class BlockPartySetup implements GameSetupHandler {
             case "floor" -> handleFloor(context);
             case "pattern" -> handlePattern(context);
             case "musictime" -> handleTime(context, "basic.initial_music_time",
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_music_time"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_music_time"));
             case "searchtime" -> handleTime(context, "basic.search_time",
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_search_time"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_search_time"));
             case "decreasetime" -> handleTime(context, "basic.decrease_time",
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_decrease_time"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_decrease_time"));
             case "mintime" -> handleTime(context, "basic.min_search_time",
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_min_time"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_min_time"));
             default -> {
                 context.getMessagesAPI().sendRaw(context.getPlayer(),
-                        module.getCoreConfig().getLanguage("admin_commands.errors.unknown_subcommand"));
+                        module.getCoreConfig().getLanguage(context.getPlayer(), "admin_commands.errors.unknown_subcommand"));
                 yield true;
             }
         };
@@ -121,7 +121,7 @@ public class BlockPartySetup implements GameSetupHandler {
 
         if (!hasFloor || !hasPatternType || (!isProcedural && !hasPatterns)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.not_configured")
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.not_configured")
                             .replace("{arena_id}", String.valueOf(context.getArenaId())));
         }
 
@@ -131,20 +131,20 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handleFloor(SetupContext<Player, CommandSender, Location> context) {
         if (!context.isPlayer()) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getCoreConfig().getLanguage("admin_commands.errors.must_be_player"));
+                    module.getCoreConfig().getLanguage(context.getPlayer(), "admin_commands.errors.must_be_player"));
             return true;
         }
 
         if (!context.hasHandlerArgs(1)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_floor"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_floor"));
             return true;
         }
 
         String action = context.getHandlerArg(0).toLowerCase(Locale.ENGLISH);
         if (!action.equals("set")) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_floor"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_floor"));
             return true;
         }
 
@@ -153,7 +153,7 @@ public class BlockPartySetup implements GameSetupHandler {
 
         if (!selection.hasCompleteSelection(player)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.must_use_stick"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.must_use_stick"));
             return true;
         }
 
@@ -173,7 +173,7 @@ public class BlockPartySetup implements GameSetupHandler {
         int blocks = x * y * z;
 
         context.getMessagesAPI().sendRaw(context.getPlayer(),
-                module.getModuleConfig().getStringFrom("language.yml", "setup_messages.set_success")
+                module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.set_success")
                         .replace("{blocks}", String.valueOf(blocks)).replace("{x}", String.valueOf(x))
                         .replace("{y}", String.valueOf(y)).replace("{z}", String.valueOf(z)));
 
@@ -183,7 +183,7 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handlePattern(SetupContext<Player, CommandSender, Location> context) {
         if (!context.hasHandlerArgs(1)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_pattern"));
             return true;
         }
 
@@ -201,7 +201,7 @@ public class BlockPartySetup implements GameSetupHandler {
             }
             default -> {
                 context.getMessagesAPI().sendRaw(context.getPlayer(),
-                        module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern"));
+                        module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_pattern"));
                 yield true;
             }
         };
@@ -210,7 +210,7 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handlePatternAdd(SetupContext<Player, CommandSender, Location> context) {
         if (!context.isPlayer()) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getCoreConfig().getLanguage("admin_commands.errors.must_be_player"));
+                    module.getCoreConfig().getLanguage(context.getPlayer(), "admin_commands.errors.must_be_player"));
             return true;
         }
 
@@ -226,7 +226,7 @@ public class BlockPartySetup implements GameSetupHandler {
 
         if (index.contains(name)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_exists")
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_exists")
                             .replace("{name}", name));
             return true;
         }
@@ -234,7 +234,7 @@ public class BlockPartySetup implements GameSetupHandler {
         Player player = context.getPlayer();
         if (!context.getSelection().hasCompleteSelection(player)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.must_use_stick"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.must_use_stick"));
             return true;
         }
 
@@ -257,7 +257,7 @@ public class BlockPartySetup implements GameSetupHandler {
         int blocks = x * y * z;
 
         context.getMessagesAPI().sendRaw(context.getPlayer(),
-                module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_added")
+                module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_added")
                         .replace("{name}", name).replace("{blocks}", String.valueOf(blocks)));
         return true;
     }
@@ -265,7 +265,7 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handlePatternRemove(SetupContext<Player, CommandSender, Location> context) {
         if (!context.hasHandlerArgs(2)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern_remove"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_pattern_remove"));
             return true;
         }
 
@@ -275,7 +275,7 @@ public class BlockPartySetup implements GameSetupHandler {
         List<String> index = parseIndex(data.getString("game.patterns.index"));
         if (!index.remove(name)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_missing")
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_missing")
                             .replace("{name}", name));
             return true;
         }
@@ -289,7 +289,7 @@ public class BlockPartySetup implements GameSetupHandler {
 
         data.save();
         context.getMessagesAPI().sendRaw(context.getPlayer(),
-                module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_removed")
+                module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_removed")
                         .replace("{name}", name));
         return true;
     }
@@ -299,10 +299,10 @@ public class BlockPartySetup implements GameSetupHandler {
         List<String> index = parseIndex(data.getString("game.patterns.index"));
 
         context.getMessagesAPI().sendRaw(context.getPlayer(),
-                module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_list_header"));
+                module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_list_header"));
         for (String name : index) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_list_entry")
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_list_entry")
                             .replace("{name}", name));
         }
 
@@ -312,7 +312,7 @@ public class BlockPartySetup implements GameSetupHandler {
     private boolean handlePatternInitial(SetupContext<Player, CommandSender, Location> context) {
         if (!context.hasHandlerArgs(2)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.usage_pattern_initial"));
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.usage_pattern_initial"));
             return true;
         }
 
@@ -321,7 +321,7 @@ public class BlockPartySetup implements GameSetupHandler {
         List<String> index = parseIndex(data.getString("game.patterns.index"));
         if (!index.contains(name)) {
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_missing")
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_missing")
                             .replace("{name}", name));
             return true;
         }
@@ -329,7 +329,7 @@ public class BlockPartySetup implements GameSetupHandler {
         data.save();
 
         context.getMessagesAPI().sendRaw(context.getPlayer(),
-                module.getModuleConfig().getStringFrom("language.yml", "setup_messages.pattern_initial_set")
+                module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.pattern_initial_set")
                         .replace("{name}", name));
         return true;
     }
@@ -345,7 +345,7 @@ public class BlockPartySetup implements GameSetupHandler {
             context.getData().setDouble(path, value);
             context.getData().save();
             context.getMessagesAPI().sendRaw(context.getPlayer(),
-                    module.getModuleConfig().getStringFrom("language.yml", "setup_messages.time_updated")
+                    module.getModuleConfig().getTranslation(context.getPlayer(), "setup_messages.time_updated")
                             .replace("{key}", path).replace("{value}", context.getHandlerArg(0)));
         } catch (NumberFormatException e) {
             context.getMessagesAPI().sendRaw(context.getPlayer(), usage);
@@ -449,14 +449,14 @@ public class BlockPartySetup implements GameSetupHandler {
 
     private void send(SetupContext<Player, CommandSender, Location> context, String path, String fallback,
                       String... replacements) {
-        String message = module.getModuleConfig().getStringFrom("language.yml", path);
+        String message = module.getModuleConfig().getTranslation(context.getPlayer(), path);
         if (message == null || message.isBlank()) {
             message = fallback;
         }
         for (int i = 0; i + 1 < replacements.length; i += 2) {
             message = message.replace(replacements[i], replacements[i + 1]);
         }
-        String prefix = module.getCoreConfig().getLanguage("prefix");
+        String prefix = module.getCoreConfig().getLanguage(context.getPlayer(), "prefix");
         message = message.replace("{prefix}", prefix == null ? "" : prefix);
         context.getMessagesAPI().sendRaw(context.getPlayer(), message);
     }
