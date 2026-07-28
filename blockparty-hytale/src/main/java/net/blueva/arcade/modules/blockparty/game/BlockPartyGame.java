@@ -759,7 +759,6 @@ public class BlockPartyGame {
         if (!arenaWinners.containsKey(arenaId)) {
             arenaWinners.put(arenaId, player.getUuid());
             module.getStatsAPI().addModuleStat(player, module.getModuleInfo().getId(), "wins", 1);
-            module.getStatsAPI().addGlobalStat(player, "wins", 1);
         }
     }
 
