@@ -543,7 +543,9 @@ public class BlockPartyGame {
             org.bukkit.block.Block block = loc.getBlock();
             if (block.getType() != org.bukkit.Material.AIR) {
                 org.bukkit.block.data.BlockData data = block.getBlockData();
-                block.setType(org.bukkit.Material.AIR);
+                // Routed through BlocksAPI (instead of a raw Block#setType) so replay recording
+                // captures this with exact timing - Bukkit fires no event for a direct block set.
+                context.getBlocksAPI().setBlock(loc, org.bukkit.Material.AIR);
 
                 powerupService.removePowerupWithSupport(context, context.getArenaId(), loc, false);
 
