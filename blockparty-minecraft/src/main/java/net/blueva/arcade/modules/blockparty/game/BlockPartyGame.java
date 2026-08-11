@@ -517,6 +517,9 @@ public class BlockPartyGame {
             String message = module.getModuleConfig().getTranslation(player, "messages.round.reveal")
                     .replace("{block}", BlockPartyUtils.formatMaterialName(state.getTargetMaterial()));
             context.getMessagesAPI().sendRaw(player, message);
+        }
+
+        for (Player player : context.getAlivePlayers()) {
             playerEffectsService.giveTargetItem(player, state.getTargetMaterial());
         }
     }
