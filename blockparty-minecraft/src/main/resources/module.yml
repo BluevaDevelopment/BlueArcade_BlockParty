@@ -2,7 +2,8 @@ name: Block Party
 id: block_party
 version: ${revision}
 type: MINIGAME
-api-version: 3.4
+api-version: 3.5
+game-version: "1.16"
 platform: MINECRAFT
 main: net.blueva.arcade.modules.blockparty.BlockPartyModule
 
